@@ -2,6 +2,7 @@
 
 Use this runbook when you are deploying `notifications` to AWS from scratch.
 Complete `platform-ops/docs/cloud-first-deploy.md` first. `notifications` depends on the shared production host, OpenBao instance, and observability stack provisioned there.
+To tear down the shared AWS infrastructure later, use `platform-ops/docs/cloud-destroy.md`.
 
 ## 1. What You Are Building
 
