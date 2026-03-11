@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  compose-smoke:
+    name: Compose Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Validate compose manifests
+        env:
+          POSTGRES_PASSWORD: app
+          API_IMAGE: notifications-api:ci
+          OPENBAO_TOKEN: ci-openbao-token
+          TRUST_PROXY: "false"
+          OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
+          KAFKA_BOOTSTRAP_SERVERS: notifications-redpanda:9092
+          NOTIFICATIONS_EMAIL_TOPIC: notification.email.requested.v1
+          NOTIFICATIONS_EMAIL_DLT_TOPIC: notification.email.requested.v1.DLT
+          SMTP_HOST: smtp.gmail.com
+          SMTP_PORT: "587"
+          SMTP_USER: ci@example.com
+          SMTP_FROM: ci@example.com
+          SMTP_STARTTLS: "true"
+        run: |
+          docker compose -f docker/compose.app.local.yml config > /dev/null
+          docker compose -f docker/compose.app.prod.yml config > /dev/null
+          docker compose -f docker/compose.ci.yml config > /dev/null
+
+      - name: Compose up
+        run: docker compose -f docker/compose.ci.yml up -d --build
+
+      - name: Wait for health
+        run: |
+          i=1
+          while [ $i -le 60 ]; do
+            if curl -fsS http://localhost:18080/health/readiness >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+            i=$((i+1))
+          done
+          docker compose -f docker/compose.ci.yml logs --no-color
+          exit 1
+
+      - name: Verify metrics endpoint
+        run: |
+          metrics="$(curl -fsS http://localhost:18080/metrics)"
+          printf '%s\n' "$metrics" | grep -q 'jvm_memory_used_bytes'
+
+      - name: Publish Kafka notification
+        run: |
+          payload='{"messageId":"ci-1","idempotencyKey":"ci-1","sourceApp":"gpool","channel":"email","templateId":"gpool.pool-invitation","recipient":{"email":"user@example.com"},"data":{"poolName":"CI Pool","poolId":"ci-pool","inviterEmail":"admin@example.com","acceptUrl":"https://example.com/pools/ci-pool/accept","poolUrl":"https://example.com/pools/ci-pool","frontendUrl":"https://example.com"},"metadata":{"eventType":"user_invited_to_pool"},"requestedAt":"2026-03-11T00:00:00Z"}'
+          docker compose -f docker/compose.ci.yml exec -T redpanda \
+            rpk topic produce notification.email.requested.v1 -k ci-1 <<<"$payload"
+
+      - name: Wait for mail delivery
+        run: |
+          i=1
+          while [ $i -le 60 ]; do
+            if curl -fsS http://localhost:18025/api/v1/messages | grep -q 'CI Pool'; then
+              exit 0
+            fi
+            sleep 2
+            i=$((i+1))
+          done
+          curl -fsS http://localhost:18025/api/v1/messages || true
+          docker compose -f docker/compose.ci.yml logs --no-color
+          exit 1
+
+      - name: Compose down
+        if: always()
+        run: docker compose -f docker/compose.ci.yml down -v
