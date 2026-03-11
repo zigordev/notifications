@@ -12,6 +12,7 @@ public record NotificationEvent(
     @NotBlank String sourceApp,
     @NotBlank String channel,
     @NotBlank String templateId,
+    @Email String replyTo,
     @Valid Recipient recipient,
     @NotEmpty Map<String, Object> data,
     Map<String, Object> metadata,

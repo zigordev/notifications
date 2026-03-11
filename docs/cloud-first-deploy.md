@@ -1,74 +1,232 @@
 # Cloud First Deploy (notifications)
 
-Use this runbook to deploy `notifications` to AWS for the first time.
+Use this runbook when you are deploying `notifications` to AWS from scratch.
+Complete `platform-ops/docs/cloud-first-deploy.md` first. `notifications` depends on the shared production host, OpenBao instance, and observability stack provisioned there.
 
-## 1. Prerequisites
+## 1. What You Are Building
 
-- `platform-ops` is already deployed to the same EC2 host.
-- OpenBao is initialized, unsealed, and has `kv` enabled.
-- An ECR repository exists for the notifications API image.
-- `docker/.env.app.prod` contains the correct non-secret production values.
+When this runbook is complete, you will have:
 
-## 2. GitHub `production` Environment
+- the `notifications` API image published to ECR
+- a production `notifications` deployment running on the shared EC2 host
+- Gmail SMTP credentials stored in OpenBao
+- Kafka, delivery, and observability config wired into the production stack
 
-Required variables:
+## 2. Prerequisites
+
+Run every command in this document from the `notifications` repo root unless stated otherwise.
+
+Required:
+
+- `platform-ops` production is already deployed
+- OpenBao production is initialized, unsealed, and has `kv` v2 enabled
+- AWS CLI with access to the target account
+- `jq`
+- GitHub access to configure repository environments
+- a Gmail or Google Workspace account that can send production email through SMTP
+
+## 3. Prepare The Gmail SMTP Credentials
+
+This service uses Gmail SMTP.
+Do not use the normal account password.
+
+Use a Google App Password instead:
+
+1. enable 2-Step Verification on the sending account
+2. create an App Password for mail sending
+3. keep that value for OpenBao key `SMTP_PASS`
+
+You also need the sender identity:
+
+- `SMTP_USER`
+  - Gmail address used for SMTP authentication
+- `SMTP_FROM`
+  - sender address shown in outgoing mail
+
+Those two values are tracked as non-secret config in `docker/.env.app.prod`.
+
+## 4. Configure The GitHub `production` Environment
+
+In the `notifications` GitHub repository, create or update environment `production`.
+
+Required environment variables:
 
 - `AWS_REGION`
+  - AWS region used by the deploy workflow
 - `AWS_ECR_API_REPOSITORY_URI`
+  - ECR repository for the API image
 - `AWS_DEPLOY_BUCKET`
+  - S3 bucket used for deploy bundles
 - `AWS_DEPLOY_INSTANCE_ID`
+  - EC2 instance targeted through SSM
 - `AWS_SSM_APP_PREFIX`
+  - SSM prefix for `notifications`, for example `/notifications/prod/app`
 
-Required secret:
+Required environment secret:
 
 - `AWS_DEPLOY_ROLE_ARN`
+  - IAM role assumed by GitHub Actions through OIDC
 
-## 3. OpenBao Secret `kv/notifications`
+## 5. Review The Tracked Non-Secret Config
 
-Create secret path `notifications` with:
+Review `docker/.env.app.prod` before the first deploy.
+
+Important values:
+
+- `TRUST_PROXY`
+  - whether the service trusts proxy headers from the shared ingress
+- `OTEL_EXPORTER_OTLP_ENDPOINT`
+  - OTLP HTTP endpoint for traces
+- `KAFKA_BOOTSTRAP_SERVERS`
+  - Kafka bootstrap servers reachable from the production host
+- `NOTIFICATIONS_EMAIL_TOPIC`
+  - main email request topic
+- `NOTIFICATIONS_EMAIL_DLT_TOPIC`
+  - dead-letter topic for failed messages
+- `SMTP_HOST`
+  - SMTP server hostname
+- `SMTP_PORT`
+  - SMTP port
+- `SMTP_USER`
+  - SMTP username / sender account
+- `SMTP_FROM`
+  - sender address shown in outgoing mail
+- `SMTP_STARTTLS`
+  - whether STARTTLS is enabled
+
+Do not put real secrets in this file.
+
+These placeholders are expected:
+
+- `POSTGRES_PASSWORD=SET_FROM_OPEN_BAO`
+- `OPENBAO_TOKEN=CHANGE_ME_PROD_OPENBAO_APP_READ_TOKEN`
+- `API_IMAGE=REQUIRED_SET_BY_DEPLOY`
+
+## 6. Create The OpenBao Secret `kv/notifications`
+
+Create secret path `kv/notifications` in the OpenBao production UI.
+
+Add these keys:
 
 - `POSTGRES_PASSWORD`
+  - production database password for `notifications`
 - `SMTP_PASS`
+  - Gmail app password for the sender account
 
-## 4. App Token In SSM
+## 7. Create The OpenBao Read Policy And App Token
 
-Store the OpenBao token under:
+Open an SSM shell on the production EC2 instance:
+
+```bash
+aws ssm start-session --profile platform-ops --target <AWS_DEPLOY_INSTANCE_ID> --region <AWS_REGION>
+```
+
+Inside that shell, resolve the latest deployed `platform-ops` release:
+
+```bash
+OPS_DIR="$(ls -1dt /opt/platform-ops/releases/* | head -n1)"
+echo "$OPS_DIR"
+```
+
+Create the narrow read policy:
+
+```bash
+ROOT_TOKEN='paste_openbao_root_token'
+
+sudo docker compose --env-file "$OPS_DIR/docker/.env.ops.prod" -f "$OPS_DIR/docker/compose.ops.prod.yml" exec -T \
+  -e BAO_ADDR=http://127.0.0.1:8200 \
+  -e BAO_TOKEN="$ROOT_TOKEN" \
+  openbao sh -lc "
+cat > /tmp/notifications-prod-read.hcl <<'EOF'
+path \"kv/data/notifications\" { capabilities = [\"read\"] }
+path \"kv/metadata/notifications\" { capabilities = [\"read\"] }
+EOF
+bao policy write notifications-prod-read /tmp/notifications-prod-read.hcl
+"
+```
+
+Create the token:
+
+```bash
+NOTIFICATIONS_OPENBAO_TOKEN="$(
+  sudo docker compose --env-file "$OPS_DIR/docker/.env.ops.prod" -f "$OPS_DIR/docker/compose.ops.prod.yml" exec -T \
+    -e BAO_ADDR=http://127.0.0.1:8200 \
+    -e BAO_TOKEN="$ROOT_TOKEN" \
+    openbao bao token create -policy=notifications-prod-read -format=json | jq -r '.auth.client_token'
+)"
+echo "$NOTIFICATIONS_OPENBAO_TOKEN"
+```
+
+Use this token only for `notifications`.
+
+## 8. Store The App Token In SSM
+
+Store the app token under the app SSM prefix:
+
+```bash
+aws ssm put-parameter \
+  --profile platform-ops \
+  --name /notifications/prod/app/OPENBAO_TOKEN \
+  --type SecureString \
+  --value "$NOTIFICATIONS_OPENBAO_TOKEN" \
+  --overwrite \
+  --region <AWS_REGION>
+```
+
+If your prefix differs, use:
 
 ```bash
 ${AWS_SSM_APP_PREFIX}/OPENBAO_TOKEN
 ```
 
-## 5. Non-Secret Config In Repo
+## 9. Trigger The First Deploy
 
-These are read from `docker/.env.app.prod`:
-
-- `TRUST_PROXY`
-- `OTEL_EXPORTER_OTLP_ENDPOINT`
-- `KAFKA_BOOTSTRAP_SERVERS`
-- `NOTIFICATIONS_EMAIL_TOPIC`
-- `NOTIFICATIONS_EMAIL_DLT_TOPIC`
-- `SMTP_HOST`
-- `SMTP_PORT`
-- `SMTP_USER`
-- `SMTP_FROM`
-- `SMTP_STARTTLS`
-
-## 6. Deploy
-
-Workflow:
+The workflow is:
 
 - `Deploy AWS App (EC2 Compose)` in `.github/workflows/deploy.yml`
 
-## 7. Validate
+Trigger it by:
 
-After deploy:
+- publishing a release tag
+- or running `workflow_dispatch` with an existing `release_tag`
+
+The workflow builds the API image, uploads the tracked deploy bundle, and runs the remote deploy script over SSM.
+
+## 10. Validate The Production Service
+
+From the EC2 instance or an SSM shell:
 
 ```bash
 curl -fsS http://127.0.0.1:8080/health/readiness
 curl -fsS http://127.0.0.1:8080/metrics
 ```
 
-## Notes
+Recommended functional checks:
 
-- No Cloudflare route is required unless you later expose an admin or preview UI publicly.
-- Kafka is currently self-hosted in this repo’s compose stack via Redpanda.
+- publish a test email event to Kafka
+- confirm the message is consumed
+- confirm delivery or failure is visible in logs and metrics
+
+## 11. Troubleshooting And Notes
+
+SMTP delivery fails:
+
+- `SMTP_PASS` is wrong
+- Gmail rejected the app password or account settings
+- `SMTP_USER` and `SMTP_FROM` do not match the intended sender account
+
+Deploy fails when reading OpenBao:
+
+- OpenBao is sealed
+- `kv/notifications` does not exist
+- the token stored in SSM does not match `notifications-prod-read`
+
+Kafka consumption fails:
+
+- `KAFKA_BOOTSTRAP_SERVERS` is wrong
+- topic names in `docker/.env.app.prod` do not match the producer apps
+
+Cloudflare / public DNS note:
+
+- no public DNS record is required for `notifications` unless you later expose a public UI or public API
+- the service normally runs as an internal backend on the shared host

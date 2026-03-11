@@ -35,6 +35,10 @@ public class TemplateCatalog {
         "gpool.user-accepted-invitation", new TemplateDefinition(
             "${userName} accepted your invitation to ${poolName} on GPool",
             "email/gpool/user-accepted-invitation.ftlh"
+        ),
+        "cv.contact-message", new TemplateDefinition(
+            "CV contact: ${subjectLine} (${senderName})",
+            "email/cv/contact-message.ftlh"
         )
     );
   }
