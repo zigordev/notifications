@@ -1,0 +1,90 @@
+name: notifications-app-ci
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: notifications
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.10
+    command:
+      [
+        "redpanda",
+        "start",
+        "--overprovisioned",
+        "--smp",
+        "1",
+        "--memory",
+        "1G",
+        "--reserve-memory",
+        "0M",
+        "--check=false",
+        "--node-id",
+        "0",
+        "--kafka-addr",
+        "INTERNAL://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092",
+        "--advertise-kafka-addr",
+        "INTERNAL://redpanda:9092,OUTSIDE://localhost:19092",
+        "--set",
+        "redpanda.auto_create_topics_enabled=true"
+      ]
+    ports:
+      - "19092:19092"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "rpk cluster health | grep -Eq 'Healthy:[[:space:]]+true'",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  smtp:
+    image: axllent/mailpit:v1.20.5
+    ports:
+      - "18025:8025"
+      - "11025:1025"
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: local
+    environment:
+      PORT: 8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: app
+      DB_PASSWORD: app
+      DB_NAME: notifications
+      TRUST_PROXY: "false"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
+      MANAGEMENT_TRACING_ENABLED: "false"
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      NOTIFICATIONS_EMAIL_TOPIC: notification.email.requested.v1
+      NOTIFICATIONS_EMAIL_DLT_TOPIC: notification.email.requested.v1.DLT
+      SMTP_HOST: smtp
+      SMTP_PORT: 1025
+      SMTP_AUTH: "false"
+      SMTP_USER: ci@example.com
+      SMTP_FROM: ci@example.com
+      SMTP_STARTTLS: "false"
+      SMTP_PASS: ci-app-password
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+      smtp:
+        condition: service_started
+    ports:
+      - "18080:8080"

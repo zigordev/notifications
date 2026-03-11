@@ -1,0 +1,7 @@
+.idea/
+.mvn/
+.vscode/
+target/
+docker/.env.app.local
+docker/.env.ops.local
+*.iml
