@@ -93,7 +93,7 @@ public class NotificationConsumer {
 
     Instant sendStarted = Instant.now();
     try {
-      gmailEmailSender.send(smtpFrom, event.recipient().email(), renderedEmail);
+      gmailEmailSender.send(smtpFrom, event.recipient().email(), event.replyTo(), renderedEmail);
       long durationMs = Duration.between(sendStarted, Instant.now()).toMillis();
       repository.recordAttempt(event.messageId(), properties.email().provider(), "sent", null, durationMs);
       repository.markSent(event.messageId());

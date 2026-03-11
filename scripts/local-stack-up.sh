@@ -2,6 +2,7 @@
 set -euo pipefail
 
 APP_ENV_FILE="docker/.env.app.local"
+APP_ENV_EXAMPLE_FILE="docker/.env.app.local.example"
 OPENBAO_LOCAL_ADDR="http://localhost:8200"
 SHARED_NETWORK="platform_ops_shared"
 OPENBAO_KV_MOUNT="kv"
@@ -31,8 +32,12 @@ unset_compose_shell_overrides() {
 }
 
 if [ ! -f "$APP_ENV_FILE" ]; then
-  echo "Missing $APP_ENV_FILE. Copy docker/.env.app.local.example first." >&2
-  exit 1
+  if [ ! -f "$APP_ENV_EXAMPLE_FILE" ]; then
+    echo "Missing $APP_ENV_FILE and $APP_ENV_EXAMPLE_FILE." >&2
+    exit 1
+  fi
+  cp "$APP_ENV_EXAMPLE_FILE" "$APP_ENV_FILE"
+  echo "Created $APP_ENV_FILE from $APP_ENV_EXAMPLE_FILE"
 fi
 
 docker network create "$SHARED_NETWORK" >/dev/null 2>&1 || true
@@ -40,6 +45,10 @@ docker network create "$SHARED_NETWORK" >/dev/null 2>&1 || true
 openbao_token="$(read_env_var_from_file "$APP_ENV_FILE" "OPENBAO_TOKEN")"
 if [ -z "$openbao_token" ]; then
   echo "OPENBAO_TOKEN is required in $APP_ENV_FILE" >&2
+  exit 1
+fi
+if [ "$openbao_token" = "CHANGE_ME_LOCAL_OPENBAO_TOKEN" ]; then
+  echo "OPENBAO_TOKEN in $APP_ENV_FILE still has the example value. Update it before retrying." >&2
   exit 1
 fi
 
