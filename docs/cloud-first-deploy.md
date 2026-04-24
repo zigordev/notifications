@@ -1,7 +1,7 @@
 # Cloud First Deploy (notifications)
 
 Use this runbook when you are deploying `notifications` to AWS from scratch.
-Complete `platform-ops/docs/cloud-first-deploy.md` first. `notifications` depends on the shared production host, OpenBao instance, and observability stack provisioned there.
+Complete `platform-ops/docs/cloud-first-deploy.md` first. `notifications` depends on the shared production host, OpenBao instance, shared Redpanda broker, and observability stack provisioned there.
 To tear down the shared AWS infrastructure later, use `platform-ops/docs/cloud-destroy.md`.
 
 ## 1. What You Are Building
@@ -11,7 +11,7 @@ When this runbook is complete, you will have:
 - the `notifications` API image published to ECR
 - a production `notifications` deployment running on the shared EC2 host
 - Gmail SMTP credentials stored in OpenBao
-- Kafka, delivery, and observability config wired into the production stack
+- Kafka, delivery, and observability config wired into the shared production platform
 
 ## 2. Prerequisites
 
@@ -21,6 +21,7 @@ Required:
 
 - `platform-ops` production is already deployed
 - OpenBao production is initialized, unsealed, and has `kv` v2 enabled
+- Redpanda from `platform-ops` is already running on the shared host
 - AWS CLI with access to the target account
 - `jq`
 - GitHub access to configure repository environments
@@ -80,6 +81,7 @@ Important values:
   - OTLP HTTP endpoint for traces
 - `KAFKA_BOOTSTRAP_SERVERS`
   - Kafka bootstrap servers reachable from the production host
+  - keep `platform-redpanda:9092` unless you intentionally move the shared broker
 - `NOTIFICATIONS_EMAIL_TOPIC`
   - main email request topic
 - `NOTIFICATIONS_EMAIL_DLT_TOPIC`
@@ -225,6 +227,7 @@ Deploy fails when reading OpenBao:
 Kafka consumption fails:
 
 - `KAFKA_BOOTSTRAP_SERVERS` is wrong
+- the shared Redpanda service in `platform-ops` is not running
 - topic names in `docker/.env.app.prod` do not match the producer apps
 
 Cloudflare / public DNS note:
