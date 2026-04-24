@@ -30,7 +30,7 @@ spring:
           writetimeout: 5000
 
 notifications:
-  kafka-bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:notifications-redpanda:9092}
+  kafka-bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:platform-redpanda:9092}
   consumer-group-id: ${KAFKA_CONSUMER_GROUP_ID:notifications-api}
   email:
     topic: ${NOTIFICATIONS_EMAIL_TOPIC:notification.email.requested.v1}

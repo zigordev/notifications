@@ -5,7 +5,7 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: app
+      POSTGRES_USER: notifications_admin
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: notifications
     volumes:
@@ -24,48 +24,6 @@ services:
         aliases:
           - notifications-postgres
 
-  redpanda:
-    image: docker.redpanda.com/redpandadata/redpanda:v24.3.10
-    restart: unless-stopped
-    command:
-      [
-        "redpanda",
-        "start",
-        "--overprovisioned",
-        "--smp",
-        "1",
-        "--memory",
-        "1G",
-        "--reserve-memory",
-        "0M",
-        "--check=false",
-        "--node-id",
-        "0",
-        "--kafka-addr",
-        "INTERNAL://0.0.0.0:9092",
-        "--advertise-kafka-addr",
-        "INTERNAL://notifications-redpanda:9092",
-        "--set",
-        "redpanda.auto_create_topics_enabled=true"
-      ]
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "rpk cluster health | grep -Eq 'Healthy:[[:space:]]+true'",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-    logging:
-      driver: "json-file"
-      options:
-        labels: "com.docker.compose.project,com.docker.compose.service"
-    networks:
-      notifications_shared:
-        aliases:
-          - notifications-redpanda
-
   api:
     image: ${API_IMAGE:?API_IMAGE is required}
     restart: unless-stopped
@@ -73,7 +31,7 @@ services:
       PORT: 8080
       DB_HOST: notifications-postgres
       DB_PORT: 5432
-      DB_USER: app
+      DB_USER: notifications_admin
       DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       DB_NAME: notifications
       TRUST_PROXY: ${TRUST_PROXY:?TRUST_PROXY is required}
@@ -93,8 +51,6 @@ services:
       SMTP_STARTTLS: ${SMTP_STARTTLS:?SMTP_STARTTLS is required}
     depends_on:
       postgres:
-        condition: service_healthy
-      redpanda:
         condition: service_healthy
     command:
       [

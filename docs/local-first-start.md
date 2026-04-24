@@ -1,7 +1,7 @@
 # Local First Start (notifications)
 
 Use this runbook when you are creating the `notifications` local environment from scratch.
-Complete `platform-ops/docs/local-first-start.md` first. `notifications` depends on the shared OpenBao instance, the shared Docker network, and the shared observability stack started there.
+Complete `platform-ops/docs/local-first-start.md` first. `notifications` depends on the shared OpenBao instance, shared Redpanda broker, shared Docker network, and shared observability stack started there.
 
 ## 1. What You Are Building
 
@@ -9,7 +9,7 @@ When this runbook is complete, you will have:
 
 - the `notifications` API running on `http://localhost:8080`
 - a local Postgres database for delivery/audit state
-- a local Redpanda broker and Redpanda Console
+- the shared local Redpanda broker running in `platform-ops`
 - Gmail SMTP delivery through the configured sender account
 - health, metrics, logs, and traces wired into `platform-ops`
 
@@ -22,6 +22,7 @@ Required:
 - `platform-ops` local stack is already running
 - OpenBao in `platform-ops` is initialized and unsealed
 - `kv` v2 is enabled in OpenBao
+- Redpanda from `platform-ops` is running on the shared Docker network
 - Docker
 - `jq`
 - a Gmail or Google Workspace account that can send SMTP mail
@@ -61,10 +62,16 @@ Create secret path `kv/notifications` with these keys:
 
 ## 5. Create A Read-Only Policy For `notifications`
 
-Create an OpenBao ACL policy named `notifications-local-read`:
+Create an OpenBao ACL policy named `notifications-local-read`.
+This step requires the OpenBao root token saved during the `platform-ops` bootstrap:
 
 ```bash
-docker compose --env-file ../platform-ops/docker/.env.ops.local -f ../platform-ops/docker/compose.ops.local.yml exec -T openbao bao policy write notifications-local-read - <<'EOF'
+ROOT_TOKEN='paste_root_token_here'
+
+docker compose --env-file ../platform-ops/docker/.env.ops.local -f ../platform-ops/docker/compose.ops.local.yml exec -T \
+  -e BAO_ADDR=http://127.0.0.1:8200 \
+  -e BAO_TOKEN="$ROOT_TOKEN" \
+  openbao bao policy write notifications-local-read - <<'EOF'
 path "kv/data/notifications" { capabilities = ["read"] }
 path "kv/metadata/notifications" { capabilities = ["read"] }
 EOF
@@ -111,7 +118,7 @@ Set or review these values:
 - `OTEL_EXPORTER_OTLP_ENDPOINT`
   - keep the default if you use the local `platform-ops` collector
 - `KAFKA_BOOTSTRAP_SERVERS`
-  - keep the default if you use the bundled local Redpanda broker
+  - keep the default if you use the shared Redpanda broker from `platform-ops`
 - `NOTIFICATIONS_EMAIL_TOPIC`
   - keep the default unless you intentionally changed your contracts
 - `NOTIFICATIONS_EMAIL_DLT_TOPIC`
@@ -159,7 +166,7 @@ Useful local URLs:
 
 - API readiness: `http://localhost:8080/health/readiness`
 - metrics: `http://localhost:8080/metrics`
-- Redpanda Console: `http://localhost:8081`
+- Redpanda Console (from `platform-ops`): `http://localhost:8081`
 
 ## 10. Daily Commands
 
@@ -196,7 +203,8 @@ SMTP delivery fails:
 
 Kafka does not receive events:
 
-- the producing apps are not pointing at `notifications-redpanda:9092`
+- `platform-ops` is not running, so the shared broker does not exist
+- the producing apps are not pointing at `platform-redpanda:9092`
 - you changed topic names and the apps still publish to the defaults
 
 You need logs:
@@ -208,6 +216,5 @@ docker compose --env-file docker/.env.app.local -f docker/compose.app.local.yml 
 Common services:
 
 - `api`
-- `redpanda`
 - `postgres`
-- `console`
+- `alloy`

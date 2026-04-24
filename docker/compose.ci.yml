@@ -4,7 +4,7 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: app
+      POSTGRES_USER: notifications_admin
       POSTGRES_PASSWORD: app
       POSTGRES_DB: notifications
     healthcheck:
@@ -63,7 +63,7 @@ services:
       PORT: 8080
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_USER: app
+      DB_USER: notifications_admin
       DB_PASSWORD: app
       DB_NAME: notifications
       TRUST_PROXY: "false"
