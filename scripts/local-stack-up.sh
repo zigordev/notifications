@@ -10,7 +10,7 @@ OPENBAO_SECRET_PATH="notifications"
 OPENBAO_REQUIRED_KEYS_API="SMTP_PASS"
 OPENBAO_REQUIRED_KEYS_DB="POSTGRES_PASSWORD"
 DB_NAME="notifications"
-DB_USER="app"
+DB_USER="notifications_admin"
 
 read_env_var_from_file() {
   local file="$1"
