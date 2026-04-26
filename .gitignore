@@ -1,6 +1,7 @@
 .idea/
 .mvn/
 .vscode/
+.DS_Store
 target/
 docker/.env.app.local
 docker/.env.ops.local
