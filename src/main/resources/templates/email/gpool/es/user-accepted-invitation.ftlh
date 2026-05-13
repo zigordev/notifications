@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitation Accepted - GPool</title>
+  <title>Invitación aceptada - GPool</title>
   <style>
     body { margin: 0; padding: 0; background: #e6eee8; color: #11181c; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.55; }
     .page { max-width: 640px; margin: 0 auto; padding: 28px 18px; }
@@ -32,24 +32,24 @@
       <div class="topbar"></div>
       <div class="inner">
         <div class="brand">GPool</div>
-        <span class="eyebrow">Invitation accepted</span>
-        <h1>A new member joined your pool</h1>
-        <p>Hello,</p>
-        <p><strong>${userName}</strong> has accepted your invitation to join <strong class="pool-name">${poolName}</strong>.</p>
+        <span class="eyebrow">Invitación aceptada</span>
+        <h1>Hay un nuevo participante en tu porra</h1>
+        <p>Hola,</p>
+        <p><strong>${userName}</strong> ha aceptado tu invitación para unirse a <strong class="pool-name">${poolName}</strong>.</p>
         <div class="info">
-          <p style="margin: 0;"><strong>New member:</strong> ${userName} (${userEmail})</p>
+          <p style="margin: 0;"><strong>Nuevo participante:</strong> ${userName} (${userEmail})</p>
         </div>
-        <p>They are now a member of your pool and can start making predictions.</p>
+        <p>Ya forma parte de la porra y puede empezar a hacer sus predicciones.</p>
         <div class="button-wrap">
-          <a href="${poolUrl}" class="button">View pool</a>
+          <a href="${poolUrl}" class="button">Ver porra</a>
         </div>
         <p class="link-block">
-          If the button does not work, copy and paste this link into your browser:<br>
+          Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
           <a href="${poolUrl}">${poolUrl}</a>
         </p>
         <div class="footer">
-          <p>This notification was sent by GPool. You can manage members from your pool dashboard.</p>
-          <p><a href="${frontendUrl}">Visit GPool</a></p>
+          <p>Esta notificación ha sido enviada por GPool. Puedes gestionar participantes desde tu porra.</p>
+          <p><a href="${frontendUrl}">Ir a GPool</a></p>
         </div>
       </div>
     </div>

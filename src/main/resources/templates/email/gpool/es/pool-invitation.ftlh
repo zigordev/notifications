@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitation Accepted - GPool</title>
+  <title>Invitación a porra - GPool</title>
   <style>
     body { margin: 0; padding: 0; background: #e6eee8; color: #11181c; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.55; }
     .page { max-width: 640px; margin: 0 auto; padding: 28px 18px; }
     .card { background: #f1f7f3; border: 1px solid #c7d9cc; border-radius: 16px; overflow: hidden; box-shadow: 0 16px 32px rgba(15, 23, 28, 0.10), 0 4px 8px rgba(15, 23, 28, 0.05); }
-    .topbar { height: 5px; background: #107a4e; }
+    .topbar { height: 5px; background: #ea580c; }
     .inner { padding: 32px; }
     .brand { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; color: #11181c; margin: 0 0 22px; }
     .eyebrow { display: inline-block; margin-bottom: 12px; padding: 4px 10px; border: 1px solid rgba(16, 122, 78, 0.28); border-radius: 999px; color: #107a4e; background: rgba(16, 122, 78, 0.10); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -32,24 +32,28 @@
       <div class="topbar"></div>
       <div class="inner">
         <div class="brand">GPool</div>
-        <span class="eyebrow">Invitation accepted</span>
-        <h1>A new member joined your pool</h1>
-        <p>Hello,</p>
-        <p><strong>${userName}</strong> has accepted your invitation to join <strong class="pool-name">${poolName}</strong>.</p>
+        <span class="eyebrow">Invitación</span>
+        <h1>Te han invitado a unirte a una porra</h1>
+        <p>Hola,</p>
+        <p>Te han invitado a unirte a <strong class="pool-name">${poolName}</strong> en GPool.</p>
         <div class="info">
-          <p style="margin: 0;"><strong>New member:</strong> ${userName} (${userEmail})</p>
+          <p style="margin: 0;"><strong>Invitado por:</strong> ${inviterEmail}</p>
         </div>
-        <p>They are now a member of your pool and can start making predictions.</p>
+        <p>Únete para hacer tus predicciones y competir con el resto de participantes.</p>
         <div class="button-wrap">
-          <a href="${poolUrl}" class="button">View pool</a>
+          <a href="${acceptUrl}" class="button">Aceptar invitación</a>
         </div>
         <p class="link-block">
-          If the button does not work, copy and paste this link into your browser:<br>
+          Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+          <a href="${acceptUrl}">${acceptUrl}</a>
+        </p>
+        <p class="link-block">
+          También puedes ver la porra directamente:<br>
           <a href="${poolUrl}">${poolUrl}</a>
         </p>
         <div class="footer">
-          <p>This notification was sent by GPool. You can manage members from your pool dashboard.</p>
-          <p><a href="${frontendUrl}">Visit GPool</a></p>
+          <p>Esta invitación ha sido enviada por GPool. Si no la esperabas, puedes ignorar este correo.</p>
+          <p><a href="${frontendUrl}">Ir a GPool</a></p>
         </div>
       </div>
     </div>
