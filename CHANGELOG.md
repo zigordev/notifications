@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/zigorlsp7/notifications/compare/v0.1.2...v0.1.3) (2026-05-13)
+
+
+### Features
+
+* openbao prod config ([#15](https://github.com/zigorlsp7/notifications/issues/15)) ([1d6ac5b](https://github.com/zigorlsp7/notifications/commit/1d6ac5b34274d1c6e4451433967df52bc8d914a9))
+
 ## [0.1.2](https://github.com/zigorlsp7/notifications/compare/v0.1.1...v0.1.2) (2026-05-13)
 
 
