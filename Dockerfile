@@ -16,7 +16,7 @@ ENV JAVA_OPTS=""
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl jq ca-certificates \
  && rm -rf /var/lib/apt/lists/*
-COPY --from=build /app/target/notifications-0.1.0.jar /app/app.jar
+COPY --from=build /app/target/notifications-*.jar /app/app.jar
 COPY scripts/openbao-run.sh /app/scripts/openbao-run.sh
 RUN chmod +x /app/scripts/openbao-run.sh
 EXPOSE 8080
