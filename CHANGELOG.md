@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/zigordev/notifications/compare/v0.1.1...v0.1.2) (2026-05-13)
+
+
+### Bug Fixes
+
+* **docker:** copy versioned notifications jar ([#11](https://github.com/zigordev/notifications/issues/11)) ([e9b55ed](https://github.com/zigordev/notifications/commit/e9b55ede20f6669fe186f87da03a4833fb21b400))
+
 ## [0.1.1](https://github.com/zigordev/notifications/compare/v0.1.0...v0.1.1) (2026-05-13)
 
 
