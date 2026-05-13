@@ -35,6 +35,21 @@ for cmd in aws jq docker curl; do
   command -v "$cmd" >/dev/null 2>&1 || { echo "Missing command: $cmd" >&2; exit 1; }
 done
 
+run_compose() {
+  if docker compose version >/dev/null 2>&1; then
+    docker compose "$@"
+    return
+  fi
+
+  if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose "$@"
+    return
+  fi
+
+  echo "Missing compose runtime (tried 'docker compose' and 'docker-compose')" >&2
+  exit 1
+}
+
 [ -n "$RELEASE_DIR" ] || { echo "Missing --release-dir" >&2; exit 1; }
 [ -n "$AWS_REGION" ] || { echo "Missing --region" >&2; exit 1; }
 [ -n "$APP_SSM_PREFIX" ] || { echo "Missing --app-ssm-prefix" >&2; exit 1; }
@@ -151,4 +166,35 @@ if [ -z "$postgres_password" ]; then
 fi
 upsert_env_var "$APP_ENV_FILE" "POSTGRES_PASSWORD" "$postgres_password"
 
-docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.prod.yml up -d --remove-orphans
+is_ecr_registry() {
+  local registry="$1"
+  [[ "$registry" == *".dkr.ecr."*".amazonaws.com"* ]]
+}
+
+login_ecr_for_image() {
+  local image="$1"
+  local registry
+  local registry_region
+
+  registry="${image%%/*}"
+
+  if [ -z "$registry" ] || [ "$registry" = "$image" ]; then
+    return 0
+  fi
+
+  if ! is_ecr_registry "$registry"; then
+    return 0
+  fi
+
+  registry_region="$(printf '%s' "$registry" | awk -F'.' '{print $4}')"
+  if [ -z "$registry_region" ]; then
+    registry_region="$AWS_REGION"
+  fi
+
+  echo "[deploy] Logging into ECR registry: $registry (region=$registry_region)"
+  aws ecr get-login-password --region "$registry_region" | docker login --username AWS --password-stdin "$registry" >/dev/null
+}
+
+login_ecr_for_image "$API_IMAGE"
+
+run_compose --env-file "$APP_ENV_FILE" -f docker/compose.app.prod.yml up -d --remove-orphans
