@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/zigordev/notifications/compare/v0.1.2...v0.1.3) (2026-05-13)
+
+
+### Features
+
+* openbao prod config ([#15](https://github.com/zigordev/notifications/issues/15)) ([b1fd9ec](https://github.com/zigordev/notifications/commit/b1fd9ec3481ccbd1dcffbe27f42181a6f039aa42))
+
 ## [0.1.2](https://github.com/zigordev/notifications/compare/v0.1.1...v0.1.2) (2026-05-13)
 
 
