@@ -11,7 +11,7 @@
 
   <groupId>com.zigordev</groupId>
   <artifactId>notifications</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2-SNAPSHOT</version>
   <name>notifications</name>
   <description>Shared Kafka-backed notifications service</description>
 
