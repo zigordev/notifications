@@ -5,43 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pool Invitation - GPool</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
-    .container { background-color: #ffffff; border-radius: 8px; padding: 40px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-    .header { text-align: center; margin-bottom: 30px; }
-    .logo { font-size: 32px; font-weight: bold; color: #89986D; margin-bottom: 10px; }
-    .title { font-size: 24px; font-weight: 600; color: #333; margin-bottom: 20px; }
-    .pool-name { font-size: 20px; font-weight: 600; color: #89986D; margin: 20px 0; }
-    .button { display: inline-block; padding: 14px 28px; background-color: #89986D; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: 600; text-align: center; margin: 20px 0; }
-    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; font-size: 14px; color: #666; text-align: center; }
-    .inviter-info { background-color: #F6F0D7; padding: 15px; border-radius: 6px; margin: 20px 0; }
+    body { margin: 0; padding: 0; background: #e6eee8; color: #11181c; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.55; }
+    .page { max-width: 640px; margin: 0 auto; padding: 28px 18px; }
+    .card { background: #f1f7f3; border: 1px solid #c7d9cc; border-radius: 16px; overflow: hidden; box-shadow: 0 16px 32px rgba(15, 23, 28, 0.10), 0 4px 8px rgba(15, 23, 28, 0.05); }
+    .topbar { height: 5px; background: #ea580c; }
+    .inner { padding: 32px; }
+    .brand { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; color: #11181c; margin: 0 0 22px; }
+    .eyebrow { display: inline-block; margin-bottom: 12px; padding: 4px 10px; border: 1px solid rgba(16, 122, 78, 0.28); border-radius: 999px; color: #107a4e; background: rgba(16, 122, 78, 0.10); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    h1 { margin: 0 0 16px; color: #11181c; font-size: 24px; line-height: 1.18; font-weight: 800; }
+    p { margin: 0 0 14px; color: #475563; font-size: 15px; }
+    strong { color: #11181c; font-weight: 800; }
+    .info { margin: 20px 0; padding: 14px 16px; background: #d5ddd8; border: 1px solid rgba(199, 217, 204, 0.80); border-radius: 10px; }
+    .pool-name { color: #11181c; font-weight: 800; }
+    .button-wrap { text-align: center; margin: 26px 0; }
+    .button { display: inline-block; padding: 13px 24px; background: #107a4e; color: #ffffff !important; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 800; box-shadow: 0 8px 24px rgba(22, 101, 52, 0.18), 0 2px 6px rgba(234, 88, 12, 0.12); }
+    .link-block { font-size: 13px; color: #475563; }
+    a { color: #166534; word-break: break-word; }
+    .footer { margin-top: 28px; padding-top: 18px; border-top: 1px solid #d8e5db; text-align: center; }
+    .footer p { margin: 0 0 8px; font-size: 13px; color: #475563; }
+    @media (max-width: 520px) { .page { padding: 16px 10px; } .inner { padding: 24px 18px; } h1 { font-size: 22px; } }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">GPool</div>
-    </div>
-    <h1 class="title">You've been invited to join a pool!</h1>
-    <p>Hello,</p>
-    <p>You've been invited to join <strong class="pool-name">${poolName}</strong> on GPool.</p>
-    <div class="inviter-info">
-      <p style="margin: 0;"><strong>Invited by:</strong> ${inviterEmail}</p>
-    </div>
-    <p>Join this pool to start making predictions and compete with other members.</p>
-    <div style="text-align: center;">
-      <a href="${acceptUrl}" class="button">Accept Invitation</a>
-    </div>
-    <p style="font-size: 14px; color: #666;">
-      If the button doesn't work, copy and paste this link into your browser:<br>
-      <a href="${acceptUrl}" style="color: #89986D; word-break: break-all;">${acceptUrl}</a>
-    </p>
-    <p style="font-size: 14px; color: #666; margin-top: 20px;">
-      Or view the pool directly:<br>
-      <a href="${poolUrl}" style="color: #89986D;">${poolUrl}</a>
-    </p>
-    <div class="footer">
-      <p>This invitation was sent by GPool. If you didn't expect this invitation, you can safely ignore this email.</p>
-      <p style="margin-top: 10px;"><a href="${frontendUrl}" style="color: #89986D;">Visit GPool</a></p>
+  <div class="page">
+    <div class="card">
+      <div class="topbar"></div>
+      <div class="inner">
+        <div class="brand">GPool</div>
+        <span class="eyebrow">Invitation</span>
+        <h1>You have been invited to join a pool</h1>
+        <p>Hello,</p>
+        <p>You have been invited to join <strong class="pool-name">${poolName}</strong> on GPool.</p>
+        <div class="info">
+          <p style="margin: 0;"><strong>Invited by:</strong> ${inviterEmail}</p>
+        </div>
+        <p>Join this pool to start making predictions and compete with the other members.</p>
+        <div class="button-wrap">
+          <a href="${acceptUrl}" class="button">Accept invitation</a>
+        </div>
+        <p class="link-block">
+          If the button does not work, copy and paste this link into your browser:<br>
+          <a href="${acceptUrl}">${acceptUrl}</a>
+        </p>
+        <p class="link-block">
+          Or view the pool directly:<br>
+          <a href="${poolUrl}">${poolUrl}</a>
+        </p>
+        <div class="footer">
+          <p>This invitation was sent by GPool. If you did not expect it, you can safely ignore this email.</p>
+          <p><a href="${frontendUrl}">Visit GPool</a></p>
+        </div>
+      </div>
     </div>
   </div>
 </body>
