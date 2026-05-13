@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/zigorlsp7/notifications/compare/v0.1.1...v0.1.2) (2026-05-13)
+
+
+### Bug Fixes
+
+* **docker:** copy versioned notifications jar ([#11](https://github.com/zigorlsp7/notifications/issues/11)) ([5ece0db](https://github.com/zigorlsp7/notifications/commit/5ece0db85ab12efa6f7093d0421f1c2c61c341b9))
+
 ## [0.1.1](https://github.com/zigorlsp7/notifications/compare/v0.1.0...v0.1.1) (2026-05-13)
 
 
