@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/zigordev/notifications/compare/v0.1.3...v0.1.4) (2026-05-13)
+
+
+### Features
+
+* penbao prod config ([#18](https://github.com/zigordev/notifications/issues/18)) ([37de227](https://github.com/zigordev/notifications/commit/37de227eb6d61e4f2a9799308a093fc024c6283e))
+
 ## [0.1.3](https://github.com/zigordev/notifications/compare/v0.1.2...v0.1.3) (2026-05-13)
 
 
