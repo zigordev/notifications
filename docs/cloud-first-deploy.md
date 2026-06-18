@@ -73,7 +73,7 @@ Required repository secret:
 
 - `RELEASE_PLEASE_TOKEN`
   - GitHub token used by Release Please to create release PRs, tags, and GitHub releases
-  - use the same kind of token configured for `cv` and `gpool`; releases created only with `GITHUB_TOKEN` do not trigger the deploy workflow
+  - use the same kind of token configured for `gpool`; releases created only with `GITHUB_TOKEN` do not trigger the deploy workflow
 
 ## 5. Review The Tracked Non-Secret Config
 

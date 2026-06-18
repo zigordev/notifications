@@ -137,12 +137,12 @@ process.stdout.write(String(value));
 export POSTGRES_PASSWORD="$postgres_password"
 
 echo "Ensuring PostgreSQL database exists: $DB_NAME"
-docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.local.yml up -d postgres
+docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.local.yml up -d notifications_db
 
 i=1
 while [ $i -le 60 ]; do
-  if docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.local.yml exec -T postgres \
-    sh -lc "pg_isready -U \"$DB_USER\" -d postgres >/dev/null 2>&1"; then
+  if docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.local.yml exec -T notifications_db \
+    sh -lc "pg_isready -U \"$DB_USER\" -d notifications >/dev/null 2>&1"; then
     break
   fi
   sleep 2
@@ -155,14 +155,14 @@ if [ $i -gt 60 ]; then
 fi
 
 db_exists="$(
-  docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.local.yml exec -T postgres \
-    sh -lc "psql -U \"$DB_USER\" -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'\""
+  docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.local.yml exec -T notifications_db \
+    sh -lc "psql -U \"$DB_USER\" -d notifications -tAc \"SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'\""
 )"
 db_exists="$(printf '%s' "$db_exists" | tr -d '[:space:]')"
 
 if [ "$db_exists" != "1" ]; then
-  docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.local.yml exec -T postgres \
-    sh -lc "psql -U \"$DB_USER\" -d postgres -c \"CREATE DATABASE \\\"$DB_NAME\\\";\""
+  docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.local.yml exec -T notifications_db \
+    sh -lc "psql -U \"$DB_USER\" -d notifications -c \"CREATE DATABASE \\\"$DB_NAME\\\";\""
 fi
 
 docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.local.yml up -d --build --force-recreate --remove-orphans

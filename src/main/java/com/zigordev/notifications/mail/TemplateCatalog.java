@@ -19,6 +19,8 @@ public class TemplateCatalog {
   private final Configuration freemarker;
   private final Map<String, Map<String, TemplateDefinition>> definitions;
 
+  private static final String LOCALE = "locale";
+
   public TemplateCatalog(@Qualifier("freemarkerConfiguration") Configuration freemarker) {
     this.freemarker = freemarker;
     this.definitions = Map.of(
@@ -65,14 +67,6 @@ public class TemplateCatalog {
                 "${userName} accepted your invitation to ${poolName} on GPool",
                 "email/gpool/user-accepted-invitation.ftlh"
             )
-        ),
-        "cv.contact-message",
-        Map.of(
-            DEFAULT_LOCALE,
-            new TemplateDefinition(
-                "CV contact: ${subjectLine} (${senderName})",
-                "email/cv/contact-message.ftlh"
-            )
         )
     );
   }
@@ -83,7 +77,7 @@ public class TemplateCatalog {
 
     Map<String, Object> model = new HashMap<>(data);
     model.putIfAbsent("generatedAt", Instant.now().toString());
-    model.put("locale", normalizeLocale(model.get("locale")));
+    model.put(LOCALE, normalizeLocale(model.get(LOCALE)));
 
     Template subjectTemplate = new Template(
         templateId + "-subject",
@@ -105,7 +99,7 @@ public class TemplateCatalog {
       throw new IllegalArgumentException("Unsupported templateId: " + templateId);
     }
 
-    String locale = normalizeLocale(data.get("locale"));
+    String locale = normalizeLocale(data.get(LOCALE));
     return localizedDefinitions.getOrDefault(
         locale,
         localizedDefinitions.get(DEFAULT_LOCALE)
