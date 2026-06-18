@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 public class NotificationMetrics {
   private final MeterRegistry meterRegistry;
 
+  private static final String TEMPLATE_ID = "template_id";
+
   public NotificationMetrics(MeterRegistry meterRegistry) {
     this.meterRegistry = meterRegistry;
   }
@@ -36,7 +38,7 @@ public class NotificationMetrics {
 
   public void renderDuration(String templateId, Duration duration) {
     Timer.builder("notification_render_duration")
-        .tag("template_id", templateId)
+        .tag(TEMPLATE_ID, templateId)
         .register(meterRegistry)
         .record(duration);
   }
@@ -44,7 +46,7 @@ public class NotificationMetrics {
   public void sendDuration(String provider, String templateId, Duration duration) {
     Timer.builder("notification_send_duration")
         .tag("provider", provider)
-        .tag("template_id", templateId)
+        .tag(TEMPLATE_ID, templateId)
         .register(meterRegistry)
         .record(duration);
   }
@@ -52,7 +54,7 @@ public class NotificationMetrics {
   private Counter counter(String name, String sourceApp, String templateId) {
     return Counter.builder(name)
         .tag("source_app", sourceApp)
-        .tag("template_id", templateId)
+        .tag(TEMPLATE_ID, templateId)
         .register(meterRegistry);
   }
 }

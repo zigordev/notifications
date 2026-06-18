@@ -61,8 +61,8 @@ public class NotificationConsumer {
       topics = "${notifications.email.topic}",
       containerFactory = "notificationKafkaListenerContainerFactory"
   )
-  public void consume(ConsumerRecord<String, String> record, Acknowledgment acknowledgment) throws Exception {
-    NotificationEvent event = parse(record.value());
+  public void consume(ConsumerRecord<String, String> consumerRecord, Acknowledgment acknowledgment) throws Exception {
+    NotificationEvent event = parse(consumerRecord.value());
     validate(event);
 
     if (!"email".equalsIgnoreCase(event.channel())) {
@@ -76,14 +76,14 @@ public class NotificationConsumer {
           "Skipping duplicate notification idempotencyKey={} requestId={} topic={}",
           event.idempotencyKey(),
           existing.requestId(),
-          record.topic()
+          consumerRecord.topic()
       );
       acknowledgment.acknowledge();
       return;
     }
 
     if (existing == null) {
-      repository.insertReceived(event, record.topic(), record.value(), currentTraceId());
+      repository.insertReceived(event, consumerRecord.topic(), consumerRecord.value(), currentTraceId());
       metrics.received(event.sourceApp(), event.templateId());
     }
 
@@ -104,9 +104,9 @@ public class NotificationConsumer {
           event.messageId(),
           event.templateId(),
           maskEmail(event.recipient().email()),
-          record.topic(),
-          record.partition(),
-          record.offset()
+          consumerRecord.topic(),
+          consumerRecord.partition(),
+          consumerRecord.offset()
       );
       acknowledgment.acknowledge();
     } catch (Exception exception) {
@@ -126,7 +126,7 @@ public class NotificationConsumer {
           event.messageId(),
           event.templateId(),
           maskEmail(event.recipient().email()),
-          record.topic(),
+          consumerRecord.topic(),
           exception.getMessage()
       );
       throw exception;
