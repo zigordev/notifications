@@ -58,7 +58,7 @@ public class KafkaConfig {
   ) {
     DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
         kafkaTemplate,
-        (record, exception) -> new TopicPartition(properties.email().dltTopic(), record.partition())
+        (consumerRecord, exception) -> new TopicPartition(properties.email().dltTopic(), consumerRecord.partition())
     );
     DefaultErrorHandler errorHandler = new DefaultErrorHandler(
         recoverer,

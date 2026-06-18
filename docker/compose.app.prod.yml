@@ -1,7 +1,14 @@
 name: notifications-app-prod
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"  
+    labels: "com.docker.compose.project,com.docker.compose.service"
+
 services:
-  postgres:
+  notifications_db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -15,16 +22,13 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-    logging:
-      driver: "json-file"
-      options:
-        labels: "com.docker.compose.project,com.docker.compose.service"
+    logging: *default-logging
     networks:
       notifications_shared:
         aliases:
           - notifications-postgres
 
-  api:
+  notifications_api:
     image: ${API_IMAGE:?API_IMAGE is required}
     restart: unless-stopped
     environment:
@@ -50,7 +54,7 @@ services:
       SMTP_FROM: ${SMTP_FROM:?SMTP_FROM is required}
       SMTP_STARTTLS: ${SMTP_STARTTLS:?SMTP_STARTTLS is required}
     depends_on:
-      postgres:
+      notifications_db:
         condition: service_healthy
     command:
       [
@@ -58,29 +62,11 @@ services:
         "-lc",
         "exec /app/scripts/openbao-run.sh java $JAVA_OPTS -jar /app/app.jar",
       ]
-    logging:
-      driver: "json-file"
-      options:
-        labels: "com.docker.compose.project,com.docker.compose.service"
+    logging: *default-logging
     networks:
       notifications_shared:
         aliases:
           - notifications-api
-
-  alloy:
-    image: grafana/alloy:v1.12.0
-    restart: unless-stopped
-    command:
-      - run
-      - --storage.path=/var/lib/alloy/data
-      - /etc/alloy/config.alloy
-    volumes:
-      - ../docker/alloy/config.alloy:/etc/alloy/config.alloy:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - app-prod-alloy-data:/var/lib/alloy/data
-    depends_on:
-      - api
-    networks: [notifications_shared]
 
 networks:
   notifications_shared:
@@ -89,4 +75,3 @@ networks:
 
 volumes:
   app-prod-pgdata:
-  app-prod-alloy-data:
