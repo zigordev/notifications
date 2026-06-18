@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/zigordev/notifications/compare/v0.1.4...v0.1.5) (2026-06-18)
+
+
+### Features
+
+* move logs to centralized platforms-ops ([#21](https://github.com/zigordev/notifications/issues/21)) ([4af942d](https://github.com/zigordev/notifications/commit/4af942d0d62293e316ca6d2cbaf8a7291459eca2))
+
 ## [0.1.4](https://github.com/zigorlsp7/notifications/compare/v0.1.3...v0.1.4) (2026-05-13)
 
 
