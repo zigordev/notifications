@@ -45,7 +45,7 @@ You will also need:
 - `SMTP_FROM`
   - the sender address shown in outgoing mail
 
-In the default local example, both are `zigorlsp7@gmail.com`.
+In the default local example, both are `zigordev@gmail.com`.
 
 ## 4. Create The OpenBao Secret `kv/notifications`
 
