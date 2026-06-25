@@ -7,7 +7,7 @@ Complete `platform-ops/docs/local-first-start.md` first. `notifications` depends
 
 When this runbook is complete, you will have:
 
-- the `notifications` API running on `http://localhost:8080`
+- the `notifications` API running on `http://localhost:18080`
 - a local Postgres database for delivery/audit state
 - the shared local Redpanda broker running in `platform-ops`
 - Gmail SMTP delivery through the configured sender account
@@ -153,19 +153,19 @@ If the env file was auto-created and still contains the placeholder OpenBao toke
 Check readiness:
 
 ```bash
-curl -fsS http://localhost:8080/health/readiness
+curl -fsS http://localhost:18080/health/readiness
 ```
 
 Check metrics:
 
 ```bash
-curl -fsS http://localhost:8080/metrics
+curl -fsS http://localhost:18080/metrics
 ```
 
 Useful local URLs:
 
-- API readiness: `http://localhost:8080/health/readiness`
-- metrics: `http://localhost:8080/metrics`
+- API readiness: `http://localhost:18080/health/readiness`
+- metrics: `http://localhost:18080/metrics`
 - Redpanda Console (from `platform-ops`): `http://localhost:8081`
 
 ## 10. Daily Commands
