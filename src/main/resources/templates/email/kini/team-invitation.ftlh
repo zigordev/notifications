@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Invitation - Kini</title>
+  <style>
+    body { margin: 0; padding: 0; background: #eef3f2; color: #17202a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; line-height: 1.55; }
+    .page { max-width: 640px; margin: 0 auto; padding: 28px 18px; }
+    .card { background: #ffffff; border: 1px solid #d8e1e1; border-radius: 12px; overflow: hidden; box-shadow: 0 16px 32px rgba(23, 32, 42, 0.10); }
+    .topbar { height: 5px; background: #0f766e; }
+    .inner { padding: 32px; }
+    .brand { font-size: 26px; font-weight: 800; color: #0f766e; margin: 0 0 22px; }
+    .eyebrow { display: inline-block; margin-bottom: 12px; padding: 4px 10px; border-radius: 999px; color: #115e59; background: #ddf3f0; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    h1 { margin: 0 0 16px; color: #17202a; font-size: 24px; line-height: 1.18; font-weight: 800; }
+    p { margin: 0 0 14px; color: #5f6b7a; font-size: 15px; }
+    strong { color: #17202a; font-weight: 800; }
+    .info { margin: 20px 0; padding: 14px 16px; background: #eef8f6; border: 1px solid #d8e1e1; border-radius: 8px; }
+    .button-wrap { text-align: center; margin: 26px 0; }
+    .button { display: inline-block; padding: 13px 24px; background: #0f766e; color: #ffffff !important; border-radius: 8px; text-decoration: none; font-size: 15px; font-weight: 800; }
+    .link-block { font-size: 13px; color: #5f6b7a; }
+    a { color: #0f766e; word-break: break-word; }
+    .footer { margin-top: 28px; padding-top: 18px; border-top: 1px solid #d8e1e1; text-align: center; }
+    .footer p { margin: 0 0 8px; font-size: 13px; color: #5f6b7a; }
+    @media (max-width: 520px) { .page { padding: 16px 10px; } .inner { padding: 24px 18px; } h1 { font-size: 22px; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <div class="topbar"></div>
+      <div class="inner">
+        <div class="brand">Kini</div>
+        <span class="eyebrow">Invitation</span>
+        <h1>You have been invited to join a team</h1>
+        <p>Hello,</p>
+        <p><strong>${inviterName!inviterEmail}</strong> invited you to join <strong>${teamName}</strong> on Kini.</p>
+        <div class="info">
+          <p style="margin: 0;"><strong>Invited by:</strong> ${inviterEmail}</p>
+        </div>
+        <p>Accept the invitation to view the team's pools and participate with the rest of the members.</p>
+        <div class="button-wrap">
+          <a href="${acceptUrl}" class="button">Accept invitation</a>
+        </div>
+        <p class="link-block">
+          If the button does not work, copy and paste this link into your browser:<br>
+          <a href="${acceptUrl}">${acceptUrl}</a>
+        </p>
+        <div class="footer">
+          <p>This invitation was sent by Kini. If you did not expect it, you can ignore this email.</p>
+          <p><a href="${frontendUrl}">Visit Kini</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

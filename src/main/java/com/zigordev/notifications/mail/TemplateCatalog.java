@@ -67,6 +67,17 @@ public class TemplateCatalog {
                 "${userName} accepted your invitation to ${poolName} on GPool",
                 "email/gpool/user-accepted-invitation.ftlh"
             )
+        ),
+        "kini.team-invitation",
+        localized(
+            new TemplateDefinition(
+                "Te han invitado a unirte a ${teamName} en Kini",
+                "email/kini/es/team-invitation.ftlh"
+            ),
+            new TemplateDefinition(
+                "You've been invited to join ${teamName} on Kini",
+                "email/kini/team-invitation.ftlh"
+            )
         )
     );
   }
