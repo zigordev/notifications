@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/zigordev/notifications/compare/v0.1.5...v0.1.6) (2026-06-29)
+
+
+### Features
+
+* added kini invitation email template ([6c9a772](https://github.com/zigordev/notifications/commit/6c9a772f045c9d72bf1a68a366cee0faaa2dfcbe))
+
 ## [0.1.5](https://github.com/zigordev/notifications/compare/v0.1.4...v0.1.5) (2026-06-18)
 
 
