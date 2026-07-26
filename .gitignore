@@ -1,8 +1,10 @@
 .idea/
-.mvn/
 .vscode/
 .DS_Store
-target/
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
 docker/.env.app.local
 docker/.env.ops.local
-*.iml

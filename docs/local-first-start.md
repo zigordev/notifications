@@ -81,6 +81,16 @@ EOF
 
 Use the OpenBao root token created during the `platform-ops` bootstrap.
 
+The recommended path securely prompts for that root token, creates the policy
+and app token, updates the ignored local env file, and verifies access without
+printing either token:
+
+```bash
+npm run local:token
+```
+
+The equivalent manual command is:
+
 Create the app token:
 
 ```bash
@@ -119,10 +129,18 @@ Set or review these values:
   - keep the default if you use the local `platform-ops` collector
 - `KAFKA_BOOTSTRAP_SERVERS`
   - keep the default if you use the shared Redpanda broker from `platform-ops`
+- `KAFKA_CONSUMER_GROUP_ID`
+  - keep `notifications-api` unless you intentionally need a separate consumer group
 - `NOTIFICATIONS_EMAIL_TOPIC`
   - keep the default unless you intentionally changed your contracts
 - `NOTIFICATIONS_EMAIL_DLT_TOPIC`
   - keep the default unless you intentionally changed your contracts
+- `NOTIFICATIONS_RETRY_INTERVAL_MS` / `NOTIFICATIONS_RETRY_MAX_ATTEMPTS`
+  - control SMTP retry timing; the defaults preserve four total attempts at five-second intervals
+- `NOTIFICATIONS_PROCESSING_LEASE_MS`
+  - controls when another consumer may recover a request left `processing` by a crashed worker
+- `SMTP_AUTH`
+  - keep `true` for Gmail; CI can set it to `false` for a local SMTP sink
 
 Leave these placeholders as they are:
 
@@ -134,7 +152,7 @@ Leave these placeholders as they are:
 Start the service:
 
 ```bash
-./scripts/local-stack-up.sh
+npm run local:up
 ```
 
 What the script does:
@@ -173,19 +191,19 @@ Useful local URLs:
 Stop the stack but keep volumes:
 
 ```bash
-./scripts/local-stack-down.sh
+npm run local:down
 ```
 
 Stop the stack and delete local volumes:
 
 ```bash
-./scripts/local-stack-reset.sh
+npm run local:reset
 ```
 
 Start it again:
 
 ```bash
-./scripts/local-stack-up.sh
+npm run local:up
 ```
 
 ## 11. Troubleshooting
@@ -194,6 +212,12 @@ Start it again:
 
 - edit `docker/.env.app.local`
 - replace the placeholder with the real app token
+
+`OpenBao secret path is not readable ... status=403`:
+
+- the token is stale or does not have the `notifications-local-read` policy
+- run `npm run local:token`, or repeat sections 5 and 6 and put the new token
+  in `docker/.env.app.local`
 
 SMTP delivery fails:
 
@@ -215,6 +239,5 @@ docker compose --env-file docker/.env.app.local -f docker/compose.app.local.yml 
 
 Common services:
 
-- `api`
-- `postgres`
-- `alloy`
+- `notifications_api`
+- `notifications_db`

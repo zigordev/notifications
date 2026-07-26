@@ -88,14 +88,22 @@ Important values:
 - `KAFKA_BOOTSTRAP_SERVERS`
   - Kafka bootstrap servers reachable from the production host
   - keep `platform-redpanda:9092` unless you intentionally move the shared broker
+- `KAFKA_CONSUMER_GROUP_ID`
+  - consumer group identity; keep `notifications-api` for the shared deployment
 - `NOTIFICATIONS_EMAIL_TOPIC`
   - main email request topic
 - `NOTIFICATIONS_EMAIL_DLT_TOPIC`
   - dead-letter topic for failed messages
+- `NOTIFICATIONS_RETRY_INTERVAL_MS` / `NOTIFICATIONS_RETRY_MAX_ATTEMPTS`
+  - SMTP retry policy; defaults are four total attempts separated by five seconds
+- `NOTIFICATIONS_PROCESSING_LEASE_MS`
+  - recovery timeout for a request left `processing` by a crashed worker
 - `SMTP_HOST`
   - SMTP server hostname
 - `SMTP_PORT`
   - SMTP port
+- `SMTP_AUTH`
+  - whether the SMTP transport authenticates; keep `true` for Gmail
 - `SMTP_USER`
   - SMTP username / sender account
 - `SMTP_FROM`
@@ -203,12 +211,21 @@ The workflow builds the API image, uploads the tracked deploy bundle, and runs t
 
 ## 10. Validate The Production Service
 
-From the EC2 instance or an SSM shell:
+From the EC2 instance or an SSM shell, resolve the deployed app release and run the checks
+inside the API container (the service intentionally does not publish port 8080 on the host):
 
 ```bash
-curl -fsS http://127.0.0.1:8080/health/readiness
-curl -fsS http://127.0.0.1:8080/metrics
+APP_DIR="$(ls -1dt /opt/notifications/releases/* | head -n1)"
+cd "$APP_DIR"
+
+sudo docker compose --env-file docker/.env.app.prod -f docker/compose.app.prod.yml exec -T \
+  notifications_api curl -fsS http://127.0.0.1:8080/health/readiness
+sudo docker compose --env-file docker/.env.app.prod -f docker/compose.app.prod.yml exec -T \
+  notifications_api curl -fsS http://127.0.0.1:8080/metrics
 ```
+
+The remote deploy script performs the same readiness check and fails the SSM deployment if the
+new API container does not become ready.
 
 Recommended functional checks:
 

@@ -2,56 +2,49 @@
 
 ## [0.1.6](https://github.com/zigordev/notifications/compare/v0.1.5...v0.1.6) (2026-06-29)
 
-
 ### Features
 
-* added kini invitation email template ([6c9a772](https://github.com/zigordev/notifications/commit/6c9a772f045c9d72bf1a68a366cee0faaa2dfcbe))
+- added kini invitation email template ([6c9a772](https://github.com/zigordev/notifications/commit/6c9a772f045c9d72bf1a68a366cee0faaa2dfcbe))
 
 ## [0.1.5](https://github.com/zigordev/notifications/compare/v0.1.4...v0.1.5) (2026-06-18)
 
-
 ### Features
 
-* move logs to centralized platforms-ops ([#21](https://github.com/zigordev/notifications/issues/21)) ([14c5c29](https://github.com/zigordev/notifications/commit/14c5c299cf326cec10c64c4ab8d1725b595aa5ed))
+- move logs to centralized platforms-ops ([#21](https://github.com/zigordev/notifications/issues/21)) ([14c5c29](https://github.com/zigordev/notifications/commit/14c5c299cf326cec10c64c4ab8d1725b595aa5ed))
 
 ## [0.1.4](https://github.com/zigordev/notifications/compare/v0.1.3...v0.1.4) (2026-05-13)
 
-
 ### Features
 
-* penbao prod config ([#18](https://github.com/zigordev/notifications/issues/18)) ([37de227](https://github.com/zigordev/notifications/commit/37de227eb6d61e4f2a9799308a093fc024c6283e))
+- penbao prod config ([#18](https://github.com/zigordev/notifications/issues/18)) ([37de227](https://github.com/zigordev/notifications/commit/37de227eb6d61e4f2a9799308a093fc024c6283e))
 
 ## [0.1.3](https://github.com/zigordev/notifications/compare/v0.1.2...v0.1.3) (2026-05-13)
 
-
 ### Features
 
-* openbao prod config ([#15](https://github.com/zigordev/notifications/issues/15)) ([b1fd9ec](https://github.com/zigordev/notifications/commit/b1fd9ec3481ccbd1dcffbe27f42181a6f039aa42))
+- openbao prod config ([#15](https://github.com/zigordev/notifications/issues/15)) ([b1fd9ec](https://github.com/zigordev/notifications/commit/b1fd9ec3481ccbd1dcffbe27f42181a6f039aa42))
 
 ## [0.1.2](https://github.com/zigordev/notifications/compare/v0.1.1...v0.1.2) (2026-05-13)
 
-
 ### Bug Fixes
 
-* **docker:** copy versioned notifications jar ([#11](https://github.com/zigordev/notifications/issues/11)) ([e9b55ed](https://github.com/zigordev/notifications/commit/e9b55ede20f6669fe186f87da03a4833fb21b400))
+- **docker:** copy versioned notifications jar ([#11](https://github.com/zigordev/notifications/issues/11)) ([e9b55ed](https://github.com/zigordev/notifications/commit/e9b55ede20f6669fe186f87da03a4833fb21b400))
 
 ## [0.1.1](https://github.com/zigordev/notifications/compare/v0.1.0...v0.1.1) (2026-05-13)
 
-
 ### Features
 
-* add chance to translate templates ([3e74f05](https://github.com/zigordev/notifications/commit/3e74f051fdf7a4d7da29de4f6ae70facb036a146))
-* add chance to translate templates ([a3aeed4](https://github.com/zigordev/notifications/commit/a3aeed485a8ce9cb8083fb0569687063574667dd))
-* add cv contact email handling ([0ef7bb1](https://github.com/zigordev/notifications/commit/0ef7bb1ba963fafa576022b98f22ec7b91c07ce2))
-* add cv contact email handling ([a2b4981](https://github.com/zigordev/notifications/commit/a2b4981a86c70c3698fa380cd7b6adac4d1d47bf))
-* bootstrap notifications service ([fd7fbb4](https://github.com/zigordev/notifications/commit/fd7fbb4bc2004c32bd4fdb57174cb3e9e1b3f2be))
-* prepare ci ([a082147](https://github.com/zigordev/notifications/commit/a082147b3b149872a155c20e2522fd685b01e12a))
-* prepare ci ([e9e5e16](https://github.com/zigordev/notifications/commit/e9e5e1689104c6c85623b3528e67c4f154444c1e))
-* prepare to deploy on PROD ([84b5cf0](https://github.com/zigordev/notifications/commit/84b5cf0a15746bd524600008ff916150249597b2))
-* prepare to deploy on PROD ([6f93fc4](https://github.com/zigordev/notifications/commit/6f93fc4e392c4e81fd3af213e74ce41cf39c76fe))
-
+- add chance to translate templates ([3e74f05](https://github.com/zigordev/notifications/commit/3e74f051fdf7a4d7da29de4f6ae70facb036a146))
+- add chance to translate templates ([a3aeed4](https://github.com/zigordev/notifications/commit/a3aeed485a8ce9cb8083fb0569687063574667dd))
+- add cv contact email handling ([0ef7bb1](https://github.com/zigordev/notifications/commit/0ef7bb1ba963fafa576022b98f22ec7b91c07ce2))
+- add cv contact email handling ([a2b4981](https://github.com/zigordev/notifications/commit/a2b4981a86c70c3698fa380cd7b6adac4d1d47bf))
+- bootstrap notifications service ([fd7fbb4](https://github.com/zigordev/notifications/commit/fd7fbb4bc2004c32bd4fdb57174cb3e9e1b3f2be))
+- prepare ci ([a082147](https://github.com/zigordev/notifications/commit/a082147b3b149872a155c20e2522fd685b01e12a))
+- prepare ci ([e9e5e16](https://github.com/zigordev/notifications/commit/e9e5e1689104c6c85623b3528e67c4f154444c1e))
+- prepare to deploy on PROD ([84b5cf0](https://github.com/zigordev/notifications/commit/84b5cf0a15746bd524600008ff916150249597b2))
+- prepare to deploy on PROD ([6f93fc4](https://github.com/zigordev/notifications/commit/6f93fc4e392c4e81fd3af213e74ce41cf39c76fe))
 
 ### Documentation
 
-* link cloud destroy runbook ([3572c89](https://github.com/zigordev/notifications/commit/3572c898d26e51f95110964d8eb071c2cd1b189e))
-* link cloud destroy runbook ([030e867](https://github.com/zigordev/notifications/commit/030e867d95df7c221ba3e5d2d97c4e12b480b56f))
+- link cloud destroy runbook ([3572c89](https://github.com/zigordev/notifications/commit/3572c898d26e51f95110964d8eb071c2cd1b189e))
+- link cloud destroy runbook ([030e867](https://github.com/zigordev/notifications/commit/030e867d95df7c221ba3e5d2d97c4e12b480b56f))

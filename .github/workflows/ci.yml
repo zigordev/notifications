@@ -14,10 +14,52 @@ permissions:
   contents: read
 
 jobs:
-  compose-smoke:
-    name: Compose Smoke
+  quality:
+    name: Quality
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Validate formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests with coverage
+        run: npm run test:cov
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: api-coverage
+          path: apps/api/coverage
+          if-no-files-found: warn
+
+  compose-validation:
+    name: Compose Manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -27,62 +69,41 @@ jobs:
           POSTGRES_PASSWORD: app
           API_IMAGE: notifications-api:ci
           OPENBAO_TOKEN: ci-openbao-token
-          TRUST_PROXY: "false"
+          TRUST_PROXY: 'false'
           OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
-          KAFKA_BOOTSTRAP_SERVERS: notifications-redpanda:9092
+          KAFKA_BOOTSTRAP_SERVERS: platform-redpanda:9092
           NOTIFICATIONS_EMAIL_TOPIC: notification.email.requested.v1
           NOTIFICATIONS_EMAIL_DLT_TOPIC: notification.email.requested.v1.DLT
           SMTP_HOST: smtp.gmail.com
-          SMTP_PORT: "587"
+          SMTP_PORT: '587'
           SMTP_USER: ci@example.com
           SMTP_FROM: ci@example.com
-          SMTP_STARTTLS: "true"
+          SMTP_STARTTLS: 'true'
         run: |
           docker compose -f docker/compose.app.local.yml config > /dev/null
           docker compose -f docker/compose.app.prod.yml config > /dev/null
           docker compose -f docker/compose.ci.yml config > /dev/null
 
-      - name: Compose up
-        run: docker compose -f docker/compose.ci.yml up -d --build
+  integration:
+    name: Kafka + PostgreSQL + SMTP Integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [quality, compose-validation]
 
-      - name: Wait for health
-        run: |
-          i=1
-          while [ $i -le 60 ]; do
-            if curl -fsS http://localhost:18080/health/readiness >/dev/null; then
-              exit 0
-            fi
-            sleep 2
-            i=$((i+1))
-          done
-          docker compose -f docker/compose.ci.yml logs --no-color
-          exit 1
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: Verify metrics endpoint
-        run: |
-          metrics="$(curl -fsS http://localhost:18080/metrics)"
-          printf '%s\n' "$metrics" | grep -q 'jvm_memory_used_bytes'
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version: 24
+          cache: npm
 
-      - name: Publish Kafka notification
-        run: |
-          payload='{"messageId":"ci-1","idempotencyKey":"ci-1","sourceApp":"gpool","channel":"email","templateId":"gpool.pool-invitation","recipient":{"email":"user@example.com"},"data":{"poolName":"CI Pool","poolId":"ci-pool","inviterEmail":"admin@example.com","acceptUrl":"https://example.com/pools/ci-pool/accept","poolUrl":"https://example.com/pools/ci-pool","frontendUrl":"https://example.com"},"metadata":{"eventType":"user_invited_to_pool"},"requestedAt":"2026-03-11T00:00:00Z"}'
-          docker compose -f docker/compose.ci.yml exec -T redpanda \
-            rpk topic produce notification.email.requested.v1 -k ci-1 <<<"$payload"
+      - name: Install locked dependencies
+        run: npm ci
 
-      - name: Wait for mail delivery
-        run: |
-          i=1
-          while [ $i -le 60 ]; do
-            if curl -fsS http://localhost:18025/api/v1/messages | grep -q 'CI Pool'; then
-              exit 0
-            fi
-            sleep 2
-            i=$((i+1))
-          done
-          curl -fsS http://localhost:18025/api/v1/messages || true
-          docker compose -f docker/compose.ci.yml logs --no-color
-          exit 1
+      - name: Run integration suite
+        run: npm run test:integration
 
-      - name: Compose down
-        if: always()
-        run: docker compose -f docker/compose.ci.yml down -v
+      - name: Compose logs
+        if: failure()
+        run: docker compose -f docker/compose.ci.yml logs --no-color
