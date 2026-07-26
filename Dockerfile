@@ -1,25 +1,34 @@
-FROM maven:3.9.9-eclipse-temurin-21 AS deps
+FROM node:24-alpine AS base
 WORKDIR /app
-COPY pom.xml ./
-RUN mvn -B -q -DskipTests dependency:go-offline
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/package.json
 
-FROM maven:3.9.9-eclipse-temurin-21 AS build
-WORKDIR /app
-COPY --from=deps /root/.m2 /root/.m2
-COPY pom.xml ./
-COPY src ./src
-RUN mvn -B -DskipTests package
+FROM base AS deps
+RUN npm ci
 
-FROM eclipse-temurin:21-jre-jammy AS prod
+FROM deps AS build
+COPY apps/api apps/api
+RUN npm run build --workspace @notifications/api
+
+FROM base AS prod-deps
+RUN npm ci --omit=dev --ignore-scripts
+
+FROM node:24-alpine AS prod
 WORKDIR /app
-ENV JAVA_OPTS=""
-RUN apt-get update \
- && apt-get install -y --no-install-recommends curl jq ca-certificates \
- && rm -rf /var/lib/apt/lists/*
-COPY --from=build /app/target/notifications-*.jar /app/app.jar
-COPY scripts/openbao-run.sh /app/scripts/openbao-run.sh
-RUN chmod +x /app/scripts/openbao-run.sh
+ENV NODE_ENV=production
+ENV OTEL_SERVICE_NAME=notifications-api
+RUN apk add --no-cache ca-certificates curl jq tini
+COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/apps/api/dist ./apps/api/dist
+COPY --chown=node:node package.json ./package.json
+COPY --chown=node:node apps/api/package.json ./apps/api/package.json
+COPY --chown=node:node scripts/openbao-run.sh ./scripts/openbao-run.sh
+RUN chmod +x ./scripts/openbao-run.sh
+USER node
 EXPOSE 8080
-CMD ["sh", "-lc", "exec java $JAVA_OPTS -jar /app/app.jar"]
+HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=4 \
+  CMD curl -fsS http://127.0.0.1:8080/health/readiness >/dev/null || exit 1
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "apps/api/dist/main.js"]
 
 FROM prod AS local

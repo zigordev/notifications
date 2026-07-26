@@ -101,6 +101,15 @@ secret_code="$(curl -s -o "$secret_body_file" -w '%{http_code}' -H "X-Vault-Toke
 if [ "$secret_code" != "200" ]; then
   echo "OpenBao secret path is not readable with OPENBAO_TOKEN (status=$secret_code): ${OPENBAO_KV_MOUNT}/${OPENBAO_SECRET_PATH}" >&2
   cat "$secret_body_file" >&2 || true
+  echo >&2
+  if [ "$secret_code" = "403" ]; then
+    echo "The token is invalid, expired, revoked, or lacks the notifications-local-read policy." >&2
+    echo "Run npm run local:token to install a fresh app token, then retry." >&2
+  elif [ "$secret_code" = "404" ]; then
+    echo "Create the kv/notifications secret described in docs/local-first-start.md and retry." >&2
+  else
+    echo "Check the OpenBao response and docs/local-first-start.md, then retry." >&2
+  fi
   exit 1
 fi
 

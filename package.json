@@ -1,0 +1,42 @@
+{
+  "name": "notifications",
+  "version": "0.1.6",
+  "private": true,
+  "description": "Shared Kafka-backed notifications service",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
+  },
+  "packageManager": "npm@11.11.1",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "start": "npm run start --workspace @notifications/api",
+    "start:dev": "npm run start:dev --workspace @notifications/api",
+    "start:prod": "npm run start:prod --workspace @notifications/api",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:cov": "npm run test:cov --workspace @notifications/api",
+    "test:integration": "bash ./scripts/ci-integration.sh",
+    "local:token": "bash ../platform-ops/scripts/provision-local-app-token.sh notifications",
+    "local:up": "bash ./scripts/local-stack-up.sh",
+    "local:down": "bash ./scripts/local-stack-down.sh",
+    "local:reset": "bash ./scripts/local-stack-reset.sh",
+    "format": "prettier --write \"apps/**/*.ts\" \".github/**/*.{yml,yaml}\" \"docker/**/*.{yml,yaml}\" \"docs/**/*.md\" \"*.{json,md}\"",
+    "format:check": "prettier --check \"apps/**/*.ts\" \".github/**/*.{yml,yaml}\" \"docker/**/*.{yml,yaml}\" \"docs/**/*.md\" \"*.{json,md}\"",
+    "ci:quality": "npm run format:check && npm run lint && npm run typecheck && npm run test:cov && npm run build",
+    "audit": "npm audit --audit-level=high",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "overrides": {
+    "multer": "2.2.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
+  }
+}

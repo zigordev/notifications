@@ -115,10 +115,15 @@ required_non_secret_keys=(
   TRUST_PROXY
   OTEL_EXPORTER_OTLP_ENDPOINT
   KAFKA_BOOTSTRAP_SERVERS
+  KAFKA_CONSUMER_GROUP_ID
   NOTIFICATIONS_EMAIL_TOPIC
   NOTIFICATIONS_EMAIL_DLT_TOPIC
+  NOTIFICATIONS_RETRY_INTERVAL_MS
+  NOTIFICATIONS_RETRY_MAX_ATTEMPTS
+  NOTIFICATIONS_PROCESSING_LEASE_MS
   SMTP_HOST
   SMTP_PORT
+  SMTP_AUTH
   SMTP_USER
   SMTP_FROM
   SMTP_STARTTLS
@@ -198,3 +203,23 @@ login_ecr_for_image() {
 login_ecr_for_image "$API_IMAGE"
 
 run_compose --env-file "$APP_ENV_FILE" -f docker/compose.app.prod.yml up -d --remove-orphans
+
+api_ready=false
+for _ in $(seq 1 60); do
+  if run_compose --env-file "$APP_ENV_FILE" -f docker/compose.app.prod.yml exec -T \
+    notifications_api curl -fsS http://127.0.0.1:8080/health/readiness >/dev/null 2>&1; then
+    api_ready=true
+    break
+  fi
+  sleep 2
+done
+
+if [ "$api_ready" != "true" ]; then
+  echo "Notifications API did not become ready after deployment." >&2
+  run_compose --env-file "$APP_ENV_FILE" -f docker/compose.app.prod.yml ps >&2 || true
+  run_compose --env-file "$APP_ENV_FILE" -f docker/compose.app.prod.yml logs --no-color \
+    notifications_api >&2 || true
+  exit 1
+fi
+
+echo "[deploy] Notifications API is ready."

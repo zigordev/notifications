@@ -1,8 +1,9 @@
 {
   "packages": {
     ".": {
-      "release-type": "maven",
-      "changelog-path": "CHANGELOG.md"
+      "release-type": "node",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": ["apps/api/package.json"]
     }
   },
   "include-v-in-tag": true,

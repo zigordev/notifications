@@ -3,10 +3,10 @@ name: notifications-app-local
 x-logging: &default-logging
   driver: json-file
   options:
-    max-size: "10m"
-    max-file: "3"  
-    labels: "com.docker.compose.project,com.docker.compose.service"
-    
+    max-size: '10m'
+    max-file: '3'
+    labels: 'com.docker.compose.project,com.docker.compose.service'
+
 services:
   notifications_db:
     image: postgres:16-alpine
@@ -16,11 +16,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: notifications
     ports:
-      - "5434:5432"
+      - '5434:5432'
     volumes:
       - app-local-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
       interval: 5s
       timeout: 3s
       retries: 20
@@ -51,24 +51,24 @@ services:
       OPENBAO_SECRET_PATH: notifications
       OPENBAO_REQUIRED_KEYS: SMTP_PASS
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:?KAFKA_BOOTSTRAP_SERVERS is required}
+      KAFKA_CONSUMER_GROUP_ID: ${KAFKA_CONSUMER_GROUP_ID:-notifications-api}
       NOTIFICATIONS_EMAIL_TOPIC: ${NOTIFICATIONS_EMAIL_TOPIC:?NOTIFICATIONS_EMAIL_TOPIC is required}
       NOTIFICATIONS_EMAIL_DLT_TOPIC: ${NOTIFICATIONS_EMAIL_DLT_TOPIC:?NOTIFICATIONS_EMAIL_DLT_TOPIC is required}
+      NOTIFICATIONS_RETRY_INTERVAL_MS: ${NOTIFICATIONS_RETRY_INTERVAL_MS:-5000}
+      NOTIFICATIONS_RETRY_MAX_ATTEMPTS: ${NOTIFICATIONS_RETRY_MAX_ATTEMPTS:-4}
+      NOTIFICATIONS_PROCESSING_LEASE_MS: ${NOTIFICATIONS_PROCESSING_LEASE_MS:-60000}
       SMTP_HOST: ${SMTP_HOST:?SMTP_HOST is required}
       SMTP_PORT: ${SMTP_PORT:?SMTP_PORT is required}
+      SMTP_AUTH: ${SMTP_AUTH:-true}
       SMTP_USER: ${SMTP_USER:?SMTP_USER is required}
       SMTP_FROM: ${SMTP_FROM:?SMTP_FROM is required}
       SMTP_STARTTLS: ${SMTP_STARTTLS:?SMTP_STARTTLS is required}
     depends_on:
       notifications_db:
         condition: service_healthy
-    command:
-      [
-        "sh",
-        "-lc",
-        "exec /app/scripts/openbao-run.sh java $JAVA_OPTS -jar /app/app.jar",
-      ]
+    command: ['sh', '-lc', 'exec /app/scripts/openbao-run.sh node apps/api/dist/main.js']
     ports:
-      - "${NOTIFICATIONS_API_PORT:-18080}:8080"
+      - '${NOTIFICATIONS_API_PORT:-18080}:8080'
     logging: *default-logging
     networks:
       notifications_shared:
