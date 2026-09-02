@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuevo mensaje desde tu CV</title>
+  <style>
+    body { margin: 0; padding: 0; background: #f4f5f7; color: #1a1d23; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.55; }
+    .page { max-width: 640px; margin: 0 auto; padding: 28px 18px; }
+    .card { background: #ffffff; border: 1px solid #e2e5ea; border-radius: 16px; overflow: hidden; box-shadow: 0 16px 32px rgba(20, 25, 40, 0.08), 0 4px 8px rgba(20, 25, 40, 0.04); }
+    .topbar { height: 5px; background: #4258c9; }
+    .inner { padding: 32px; }
+    .brand { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; color: #1a1d23; margin: 0 0 22px; }
+    .eyebrow { display: inline-block; margin-bottom: 12px; padding: 4px 10px; border: 1px solid rgba(66, 88, 201, 0.28); border-radius: 999px; color: #4258c9; background: rgba(66, 88, 201, 0.10); font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    h1 { margin: 0 0 16px; color: #1a1d23; font-size: 24px; line-height: 1.18; font-weight: 800; }
+    p { margin: 0 0 14px; color: #5b6472; font-size: 15px; }
+    strong { color: #1a1d23; font-weight: 800; }
+    .info { margin: 20px 0; padding: 14px 16px; background: #f4f5f7; border: 1px solid #e2e5ea; border-radius: 10px; }
+    .info p { margin: 0 0 6px; }
+    .info p:last-child { margin: 0; }
+    /* pre-wrap keeps the sender's line breaks without resorting to an
+       unescaped triple-stache, which would make the body an XSS vector. */
+    .message { margin: 20px 0; padding: 16px 18px; background: #ffffff; border: 1px solid #e2e5ea; border-left: 3px solid #4258c9; border-radius: 10px; color: #1a1d23; font-size: 15px; white-space: pre-wrap; word-break: break-word; }
+    .button-wrap { text-align: center; margin: 26px 0; }
+    .button { display: inline-block; padding: 13px 24px; background: #4258c9; color: #ffffff !important; border-radius: 10px; text-decoration: none; font-size: 15px; font-weight: 800; box-shadow: 0 8px 24px rgba(66, 88, 201, 0.18); }
+    a { color: #4258c9; word-break: break-word; }
+    .footer { margin-top: 28px; padding-top: 18px; border-top: 1px solid #e8eaee; text-align: center; }
+    .footer p { margin: 0; font-size: 13px; color: #767f8c; }
+    @media (max-width: 520px) { .page { padding: 16px 10px; } .inner { padding: 24px 18px; } h1 { font-size: 22px; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <div class="topbar"></div>
+      <div class="inner">
+        <div class="brand">CV</div>
+        <span class="eyebrow">Formulario de contacto</span>
+        <h1>Alguien te ha escrito desde tu CV</h1>
+        <div class="info">
+          <p><strong>Nombre:</strong> {{name}}</p>
+          <p><strong>Email:</strong> <a href="mailto:{{email}}">{{email}}</a></p>
+        </div>
+        <p>Su mensaje:</p>
+        <div class="message">{{message}}</div>
+        <div class="button-wrap">
+          <a href="mailto:{{email}}" class="button">Responder a este mensaje</a>
+        </div>
+        <div class="footer">
+          <p>Enviado desde el formulario de contacto de tu CV. Responde directamente para contactar con el remitente.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

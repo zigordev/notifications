@@ -53,6 +53,16 @@ describe('TemplateCatalogService', () => {
       en: 'Taylor accepted your invitation to Champions on GPool',
     },
     {
+      templateId: 'cv.contact-received',
+      data: {
+        name: 'Taylor',
+        email: 'taylor@example.com',
+        message: 'Hello, I saw your CV.',
+      },
+      es: 'Nuevo mensaje de Taylor desde tu CV',
+      en: 'New message from Taylor via your CV',
+    },
+    {
       templateId: 'kini.team-invitation',
       data: {
         teamName: 'Champions',
@@ -127,6 +137,33 @@ describe('TemplateCatalogService', () => {
     });
 
     expect(result.html).toContain('<p>Hello there,</p>');
+  });
+
+  it('falls back to the default locale for an unsupported language tag', async () => {
+    const result = await catalog.render('cv.contact-received', {
+      locale: 'pt',
+      name: 'Taylor',
+      email: 'taylor@example.com',
+      message: 'Ola',
+    });
+
+    expect(result.subject).toBe('Nuevo mensaje de Taylor desde tu CV');
+    expect(result.html).toContain('lang="es"');
+  });
+
+  it('escapes the sender-controlled contact message', async () => {
+    const result = await catalog.render('cv.contact-received', {
+      locale: 'en',
+      name: 'Taylor',
+      email: 'taylor@example.com',
+      message: '<img src=x onerror=alert(1)>\nsecond line',
+    });
+
+    expect(result.html).not.toContain('<img src=x');
+    expect(result.html).toContain('&lt;img src&#x3D;x');
+    // pre-wrap keeps the newline meaningful without unescaped HTML
+    expect(result.html).toContain('second line');
+    expect(result.html).toContain('white-space: pre-wrap');
   });
 
   it('rejects an unsupported template as non-retryable', async () => {

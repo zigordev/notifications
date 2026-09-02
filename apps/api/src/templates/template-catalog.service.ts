@@ -43,6 +43,12 @@ const DEFINITIONS: Readonly<Record<string, Readonly<Record<Locale, TemplateDefin
     '{{userName}} accepted your invitation to {{poolName}} on GPool',
     'email/gpool/user-accepted-invitation.html'
   ),
+  'cv.contact-received': localized(
+    'Nuevo mensaje de {{name}} desde tu CV',
+    'email/cv/es/contact-received.html',
+    'New message from {{name}} via your CV',
+    'email/cv/contact-received.html'
+  ),
   'kini.team-invitation': localized(
     'Te han invitado a unirte a {{teamName}} en Kini',
     'email/kini/es/team-invitation.html',
