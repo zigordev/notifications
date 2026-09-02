@@ -13,30 +13,36 @@
     "apps/*"
   ],
   "scripts": {
+    "audit": "npm audit --audit-level=high",
     "build": "npm run build --workspaces --if-present",
+    "ci:quality:local": "npm run format:check && npm run lint && npm run typecheck && npm run test:cov && npm run build",
+    "clean": "npm run clean --workspaces --if-present",
+    "format": "prettier --write \"apps/**/*.ts\" \".github/**/*.{yml,yaml}\" \"docker/**/*.{yml,yaml}\" \"docs/**/*.md\" \"*.{json,md}\"",
+    "format:check": "prettier --check \"apps/**/*.ts\" \".github/**/*.{yml,yaml}\" \"docker/**/*.{yml,yaml}\" \"docs/**/*.md\" \"*.{json,md}\"",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "local:down": "bash ./scripts/local-stack-down.sh",
+    "local:reset": "bash ./scripts/local-stack-reset.sh",
+    "local:token": "bash ../platform-ops/scripts/provision-local-app-token.sh notifications",
+    "local:up": "bash ./scripts/local-stack-up.sh",
+    "precommit:checks": "npm run test:secrets:gitleaks && npm run ci:quality:local",
+    "prepare": "node ./scripts/prepare-husky.mjs",
     "start": "npm run start --workspace @notifications/api",
     "start:dev": "npm run start:dev --workspace @notifications/api",
     "start:prod": "npm run start:prod --workspace @notifications/api",
-    "lint": "npm run lint --workspaces --if-present",
-    "lint:fix": "npm run lint:fix --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:cov": "npm run test:cov --workspace @notifications/api",
     "test:integration": "bash ./scripts/ci-integration.sh",
-    "local:token": "bash ../platform-ops/scripts/provision-local-app-token.sh notifications",
-    "local:up": "bash ./scripts/local-stack-up.sh",
-    "local:down": "bash ./scripts/local-stack-down.sh",
-    "local:reset": "bash ./scripts/local-stack-reset.sh",
-    "format": "prettier --write \"apps/**/*.ts\" \".github/**/*.{yml,yaml}\" \"docker/**/*.{yml,yaml}\" \"docs/**/*.md\" \"*.{json,md}\"",
-    "format:check": "prettier --check \"apps/**/*.ts\" \".github/**/*.{yml,yaml}\" \"docker/**/*.{yml,yaml}\" \"docs/**/*.md\" \"*.{json,md}\"",
-    "ci:quality": "npm run format:check && npm run lint && npm run typecheck && npm run test:cov && npm run build",
-    "audit": "npm audit --audit-level=high",
-    "clean": "npm run clean --workspaces --if-present"
+    "test:secrets:gitleaks": "./scripts/precommit-gitleaks.sh",
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "overrides": {
     "multer": "2.2.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.4.2",
+    "@commitlint/config-conventional": "^20.4.2",
+    "husky": "^9.1.7",
     "prettier": "^3.6.2"
   }
 }
