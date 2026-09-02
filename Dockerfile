@@ -4,7 +4,10 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 
 FROM base AS deps
-RUN npm ci
+# HUSKY=0 and --ignore-scripts: the root `prepare` script installs git hooks
+# and lives in scripts/, which this stage does not copy. Hooks are
+# meaningless in an image anyway.
+RUN HUSKY=0 npm ci --ignore-scripts
 
 FROM deps AS build
 COPY apps/api apps/api
