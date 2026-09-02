@@ -18,10 +18,11 @@ describe('HealthService', () => {
     const health = new HealthService(database, kafka, logger);
 
     await expect(health.readiness()).resolves.toEqual({
-      status: 'UP',
+      status: 'ok',
+      service: 'notifications-api',
       components: {
-        db: { status: 'UP' },
-        kafka: { status: 'UP' },
+        db: { status: 'up' },
+        kafka: { status: 'up' },
       },
     });
   });
@@ -37,10 +38,11 @@ describe('HealthService', () => {
 
     const result = await health.readiness();
     expect(result).toEqual({
-      status: 'DOWN',
+      status: 'error',
+      service: 'notifications-api',
       components: {
-        db: { status: 'DOWN' },
-        kafka: { status: 'UP' },
+        db: { status: 'down' },
+        kafka: { status: 'up' },
       },
     });
     expect(JSON.stringify(result)).not.toContain('password secret');
