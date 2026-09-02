@@ -3,12 +3,17 @@ import { JsonLogger } from '../common/json-logger';
 import { DatabaseService } from '../database/database.service';
 import { NotificationConsumerService } from '../kafka/notification-consumer.service';
 
+/** Matches `OTEL_SERVICE_NAME`, so health, metrics, traces and logs all name
+ *  this service identically. */
+export const SERVICE_NAME = 'notifications-api';
+
 export interface HealthComponent {
-  status: 'DOWN' | 'UP';
+  status: 'down' | 'up';
 }
 
 export interface HealthBody {
-  status: 'DOWN' | 'UP';
+  status: 'error' | 'ok';
+  service: string;
   components: {
     db: HealthComponent;
     kafka: HealthComponent;
@@ -33,10 +38,11 @@ export class HealthService {
     }
     const kafkaHealthy = this.kafka.isReady();
     return {
-      status: databaseHealthy && kafkaHealthy ? 'UP' : 'DOWN',
+      status: databaseHealthy && kafkaHealthy ? 'ok' : 'error',
+      service: SERVICE_NAME,
       components: {
-        db: { status: databaseHealthy ? 'UP' : 'DOWN' },
-        kafka: { status: kafkaHealthy ? 'UP' : 'DOWN' },
+        db: { status: databaseHealthy ? 'up' : 'down' },
+        kafka: { status: kafkaHealthy ? 'up' : 'down' },
       },
     };
   }

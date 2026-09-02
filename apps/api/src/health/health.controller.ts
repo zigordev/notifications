@@ -1,6 +1,6 @@
 import { Controller, Get, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { HealthService } from './health.service';
+import { HealthService, SERVICE_NAME } from './health.service';
 
 @Controller()
 export class HealthController {
@@ -12,8 +12,8 @@ export class HealthController {
   }
 
   @Get('health/liveness')
-  liveness(): { status: 'UP' } {
-    return { status: 'UP' };
+  liveness(): { status: 'ok'; service: string } {
+    return { status: 'ok', service: SERVICE_NAME };
   }
 
   @Get('health/readiness')
@@ -23,6 +23,6 @@ export class HealthController {
 
   private async writeReadiness(response: Response): Promise<void> {
     const body = await this.healthService.readiness();
-    response.status(body.status === 'UP' ? 200 : 503).json(body);
+    response.status(body.status === 'ok' ? 200 : 503).json(body);
   }
 }
