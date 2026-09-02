@@ -1,5 +1,6 @@
 import './instrumentation';
 import 'reflect-metadata';
+import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
@@ -11,6 +12,12 @@ async function bootstrap(): Promise<void> {
     bufferLogs: true,
   });
   const config = app.get<AppConfig>(APP_CONFIG);
+  // Security headers. CSP is off: this is a JSON API, where a content policy
+  // buys nothing, and both gpool and kini serve Swagger UI, which needs the
+  // inline scripts a default helmet CSP would block. The headers that matter
+  // here — HSTS, nosniff, frame-options, referrer-policy — are all still set.
+  app.use(helmet({ contentSecurityPolicy: false }));
+
   app.useLogger(app.get(JsonLogger));
   app.set('trust proxy', config.trustProxy);
   app.enableShutdownHooks();
