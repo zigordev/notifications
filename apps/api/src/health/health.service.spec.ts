@@ -1,23 +1,24 @@
-import { JsonLogger } from '../common/json-logger';
+import { vi } from 'vitest';
+import { JsonLogger } from '../observability';
 import { DatabaseService } from '../database/database.service';
 import { NotificationConsumerService } from '../kafka/notification-consumer.service';
 import { HealthService } from './health.service';
 
 describe('HealthService', () => {
   const logger = {
-    warn: jest.fn(),
+    warn: vi.fn(),
   } as unknown as JsonLogger;
 
   it('reports readiness only when PostgreSQL and Kafka are ready', async () => {
     const database = {
-      ping: jest.fn().mockResolvedValue(undefined),
+      ping: vi.fn().mockResolvedValue(undefined),
     } as unknown as DatabaseService;
     const kafka = {
-      isReady: jest.fn().mockReturnValue(true),
+      isReady: vi.fn().mockReturnValue(true),
     } as unknown as NotificationConsumerService;
     const health = new HealthService(database, kafka, logger);
 
-    await expect(health.readiness()).resolves.toEqual({
+    await expect(health.check()).resolves.toEqual({
       status: 'ok',
       service: 'notifications-api',
       components: {
@@ -29,14 +30,14 @@ describe('HealthService', () => {
 
   it('returns a safe degraded response when PostgreSQL is unavailable', async () => {
     const database = {
-      ping: jest.fn().mockRejectedValue(new Error('password secret')),
+      ping: vi.fn().mockRejectedValue(new Error('password secret')),
     } as unknown as DatabaseService;
     const kafka = {
-      isReady: jest.fn().mockReturnValue(true),
+      isReady: vi.fn().mockReturnValue(true),
     } as unknown as NotificationConsumerService;
     const health = new HealthService(database, kafka, logger);
 
-    const result = await health.readiness();
+    const result = await health.check();
     expect(result).toEqual({
       status: 'error',
       service: 'notifications-api',

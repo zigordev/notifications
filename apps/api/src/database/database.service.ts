@@ -2,7 +2,7 @@ import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { join } from 'node:path';
 import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
-import { JsonLogger } from '../common/json-logger';
+import { JsonLogger } from '../observability';
 import { runMigrations } from './migration-runner';
 
 @Injectable()

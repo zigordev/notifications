@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { AppConfig } from '../config/app-config';
 import { NonRetryableNotificationError, NotificationProcessingBusyError } from '../common/errors';
 import { RetryExecutor } from './retry-executor';
@@ -11,9 +12,9 @@ describe('RetryExecutor', () => {
   } as AppConfig;
 
   it('uses the established four total delivery attempts', async () => {
-    const sleeper = jest.fn().mockResolvedValue(undefined);
-    const onRetry = jest.fn();
-    const operation = jest
+    const sleeper = vi.fn().mockResolvedValue(undefined);
+    const onRetry = vi.fn();
+    const operation = vi
       .fn()
       .mockRejectedValueOnce(new Error('first'))
       .mockRejectedValueOnce(new Error('second'))
@@ -31,8 +32,8 @@ describe('RetryExecutor', () => {
   });
 
   it('stops immediately for a non-retryable notification error', async () => {
-    const sleeper = jest.fn().mockResolvedValue(undefined);
-    const operation = jest.fn().mockRejectedValue(new NonRetryableNotificationError('invalid'));
+    const sleeper = vi.fn().mockResolvedValue(undefined);
+    const operation = vi.fn().mockRejectedValue(new NonRetryableNotificationError('invalid'));
     const executor = new RetryExecutor(config, sleeper);
 
     await expect(executor.execute(operation)).rejects.toThrow('invalid');
@@ -41,8 +42,8 @@ describe('RetryExecutor', () => {
   });
 
   it('propagates the final error after all attempts', async () => {
-    const sleeper = jest.fn().mockResolvedValue(undefined);
-    const operation = jest.fn().mockRejectedValue(new Error('SMTP down'));
+    const sleeper = vi.fn().mockResolvedValue(undefined);
+    const operation = vi.fn().mockRejectedValue(new Error('SMTP down'));
     const executor = new RetryExecutor(config, sleeper);
 
     await expect(executor.execute(operation)).rejects.toThrow('SMTP down');
@@ -51,9 +52,9 @@ describe('RetryExecutor', () => {
   });
 
   it('waits for a current processing lease without spending a delivery attempt', async () => {
-    const sleeper = jest.fn().mockResolvedValue(undefined);
-    const onRetry = jest.fn();
-    const operation = jest
+    const sleeper = vi.fn().mockResolvedValue(undefined);
+    const onRetry = vi.fn();
+    const operation = vi
       .fn()
       .mockRejectedValueOnce(new NotificationProcessingBusyError('message-1', 47_000))
       .mockResolvedValue('sent');

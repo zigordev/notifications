@@ -6,7 +6,7 @@ import {
   NonRetryableNotificationError,
   NotificationProcessingBusyError,
 } from '../common/errors';
-import { JsonLogger } from '../common/json-logger';
+import { JsonLogger } from '../observability';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
 import { EmailSenderService } from '../email/email-sender.service';
 import { NotificationMetricsService } from '../metrics/notification-metrics.service';

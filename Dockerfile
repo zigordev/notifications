@@ -30,7 +30,7 @@ RUN chmod +x ./scripts/openbao-run.sh
 USER node
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=4 \
-  CMD curl -fsS http://127.0.0.1:8080/health/readiness >/dev/null || exit 1
+  CMD curl -fsS http://127.0.0.1:8080/health >/dev/null || exit 1
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "apps/api/dist/main.js"]
 

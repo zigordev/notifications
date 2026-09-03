@@ -9,6 +9,8 @@ x-logging: &default-logging
 
 services:
   notifications_db:
+    security_opt:
+      - no-new-privileges:true
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -29,6 +31,8 @@ services:
           - notifications-postgres
 
   notifications_api:
+    security_opt:
+      - no-new-privileges:true
     image: ${API_IMAGE:?API_IMAGE is required}
     restart: unless-stopped
     environment:

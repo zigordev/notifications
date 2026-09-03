@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -60,9 +61,9 @@ describe('runMigrations', () => {
 
 function migrationClient(checksum: number): {
   client: PoolClient;
-  query: jest.Mock;
+  query: Mock;
 } {
-  const query = jest.fn(async (statement: string) => {
+  const query = vi.fn(async (statement: string) => {
     if (statement.includes('FROM flyway_schema_history')) {
       return {
         rows: [

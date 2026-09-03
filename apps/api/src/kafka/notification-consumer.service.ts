@@ -11,7 +11,7 @@ import {
 } from 'kafkajs';
 import SnappyCodec from 'kafkajs-snappy';
 import { errorMessage } from '../common/errors';
-import { JsonLogger } from '../common/json-logger';
+import { JsonLogger, kafkaLogCreator } from '../observability';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
 import { NotificationProcessorService } from '../notifications/notification-processor.service';
 import { RetryExecutor } from './retry-executor';
@@ -34,6 +34,11 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
       clientId: config.telemetry.serviceName,
       brokers: config.kafka.bootstrapServers,
       logLevel: logLevel.ERROR,
+      // kafkajs writes its own JSON shape with no `service` field and no trace
+      // context. Those are precisely the lines you want when a broker
+      // disappears, and they were the only ones in the estate that a dashboard
+      // filtering on `app` could not find.
+      logCreator: kafkaLogCreator(),
     });
     this.consumer = kafka.consumer({
       groupId: config.kafka.consumerGroupId,

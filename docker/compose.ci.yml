@@ -2,6 +2,8 @@ name: notifications-app-ci
 
 services:
   postgres:
+    security_opt:
+      - no-new-privileges:true
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: notifications_admin
@@ -14,6 +16,8 @@ services:
       retries: 20
 
   redpanda:
+    security_opt:
+      - no-new-privileges:true
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.10
     command:
       [
@@ -43,6 +47,8 @@ services:
       retries: 20
 
   redpanda-init:
+    security_opt:
+      - no-new-privileges:true
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.10
     depends_on:
       redpanda:
@@ -54,12 +60,16 @@ services:
         rpk topic create notification.email.requested.v1.DLT --brokers redpanda:9092 --partitions 2 || true
 
   smtp:
+    security_opt:
+      - no-new-privileges:true
     image: axllent/mailpit:v1.20.5
     ports:
       - '18025:8025'
       - '11025:1025'
 
   api:
+    security_opt:
+      - no-new-privileges:true
     build:
       context: ..
       dockerfile: Dockerfile
@@ -98,6 +108,8 @@ services:
       - '18080:8080'
 
   api-peer:
+    security_opt:
+      - no-new-privileges:true
     build:
       context: ..
       dockerfile: Dockerfile

@@ -207,7 +207,7 @@ run_compose --env-file "$APP_ENV_FILE" -f docker/compose.app.prod.yml up -d --re
 api_ready=false
 for _ in $(seq 1 60); do
   if run_compose --env-file "$APP_ENV_FILE" -f docker/compose.app.prod.yml exec -T \
-    notifications_api curl -fsS http://127.0.0.1:8080/health/readiness >/dev/null 2>&1; then
+    notifications_api curl -fsS http://127.0.0.1:8080/health >/dev/null 2>&1; then
     api_ready=true
     break
   fi

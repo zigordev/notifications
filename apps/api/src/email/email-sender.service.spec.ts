@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { AppConfig } from '../config/app-config';
 import { EmailSenderService } from './email-sender.service';
 
@@ -9,7 +10,7 @@ describe('EmailSenderService', () => {
   } as AppConfig;
 
   it('preserves from, reply-to, subject, and HTML behavior', async () => {
-    const sendMail = jest.fn().mockResolvedValue(undefined);
+    const sendMail = vi.fn().mockResolvedValue(undefined);
     const sender = new EmailSenderService(config, {
       sendMail,
     });
@@ -29,7 +30,7 @@ describe('EmailSenderService', () => {
   });
 
   it('does not add a blank reply-to header', async () => {
-    const sendMail = jest.fn().mockResolvedValue(undefined);
+    const sendMail = vi.fn().mockResolvedValue(undefined);
     const sender = new EmailSenderService(config, {
       sendMail,
     });

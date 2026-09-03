@@ -42,7 +42,6 @@ describe('loadAppConfig', () => {
         provider: 'gmail-smtp',
       },
       telemetry: {
-        tracingEnabled: true,
         serviceName: 'notifications-api',
       },
     });
@@ -71,7 +70,6 @@ describe('loadAppConfig', () => {
       SMTP_USER: 'user',
       SMTP_PASS: 'pass',
       SMTP_FROM: 'from@example.com',
-      MANAGEMENT_TRACING_ENABLED: 'false',
       OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector/v1/traces',
       OTEL_SERVICE_NAME: 'notifications-test',
     };
@@ -92,7 +90,6 @@ describe('loadAppConfig', () => {
       from: 'from@example.com',
     });
     expect(config.telemetry).toEqual({
-      tracingEnabled: false,
       otlpEndpoint: 'http://collector/v1/traces',
       serviceName: 'notifications-test',
     });

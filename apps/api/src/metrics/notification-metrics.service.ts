@@ -1,5 +1,5 @@
 import { Injectable, Optional } from '@nestjs/common';
-import { collectDefaultMetrics, Counter, Histogram, Registry } from 'prom-client';
+import { Counter, Histogram, Registry } from 'prom-client';
 
 @Injectable()
 export class NotificationMetricsService {
@@ -12,12 +12,17 @@ export class NotificationMetricsService {
   private readonly renderDurationHistogram: Histogram<'template_id'>;
   private readonly sendDurationHistogram: Histogram<'provider' | 'template_id'>;
 
+  /**
+   * The registry comes from `ObservabilityModule`, so these metrics and the
+   * process defaults are served by one `/metrics` scrape.
+   *
+   * `collectDefaultMetrics` is deliberately NOT called here — the shared
+   * registry already collects them, and calling it twice on the same registry
+   * makes prom-client throw on a duplicate metric name. The optional fallback
+   * is for tests, which want an empty registry to assert against.
+   */
   constructor(@Optional() registry?: Registry) {
     this.registry = registry ?? new Registry();
-    collectDefaultMetrics({
-      register: this.registry,
-      prefix: '',
-    });
     this.receivedCounter = new Counter({
       name: 'notifications_received_total',
       help: 'Number of notification requests accepted for processing.',

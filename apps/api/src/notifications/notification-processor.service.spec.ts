@@ -1,6 +1,7 @@
+import { vi, type Mocked } from 'vitest';
 import { AppConfig } from '../config/app-config';
 import { EmailSenderService } from '../email/email-sender.service';
-import { JsonLogger } from '../common/json-logger';
+import { JsonLogger } from '../observability';
 import { NonRetryableNotificationError, NotificationProcessingBusyError } from '../common/errors';
 import { NotificationMetricsService } from '../metrics/notification-metrics.service';
 import { TemplateCatalogService } from '../templates/template-catalog.service';
@@ -28,9 +29,9 @@ describe('NotificationProcessorService', () => {
       provider: 'gmail-smtp',
     },
   } as AppConfig;
-  let templates: jest.Mocked<Pick<TemplateCatalogService, 'render'>>;
-  let emailSender: jest.Mocked<Pick<EmailSenderService, 'send'>>;
-  let repository: jest.Mocked<
+  let templates: Mocked<Pick<TemplateCatalogService, 'render'>>;
+  let emailSender: Mocked<Pick<EmailSenderService, 'send'>>;
+  let repository: Mocked<
     Pick<
       NotificationRepository,
       | 'claim'
@@ -42,7 +43,7 @@ describe('NotificationProcessorService', () => {
       | 'recordDeadLetter'
     >
   >;
-  let metrics: jest.Mocked<
+  let metrics: Mocked<
     Pick<
       NotificationMetricsService,
       | 'received'
@@ -54,44 +55,44 @@ describe('NotificationProcessorService', () => {
       | 'sendDuration'
     >
   >;
-  let logger: jest.Mocked<Pick<JsonLogger, 'log' | 'error'>>;
+  let logger: Mocked<Pick<JsonLogger, 'log' | 'error'>>;
   let processor: NotificationProcessorService;
 
   beforeEach(() => {
     templates = {
-      render: jest.fn().mockResolvedValue({
+      render: vi.fn().mockResolvedValue({
         subject: 'Invitation',
         html: '<p>Invitation</p>',
       }),
     };
     emailSender = {
-      send: jest.fn().mockResolvedValue(undefined),
+      send: vi.fn().mockResolvedValue(undefined),
     };
     repository = {
-      claim: jest.fn().mockResolvedValue({
+      claim: vi.fn().mockResolvedValue({
         kind: 'claimed',
         requestId: 'message-1',
         isNew: true,
       }),
-      findByIdempotencyKey: jest.fn().mockResolvedValue(null),
-      recordAttempt: jest.fn().mockResolvedValue(undefined),
-      markSent: jest.fn().mockResolvedValue(undefined),
-      markFailed: jest.fn().mockResolvedValue(undefined),
-      markDeadLettered: jest.fn().mockResolvedValue(undefined),
-      recordDeadLetter: jest.fn().mockResolvedValue(undefined),
+      findByIdempotencyKey: vi.fn().mockResolvedValue(null),
+      recordAttempt: vi.fn().mockResolvedValue(undefined),
+      markSent: vi.fn().mockResolvedValue(undefined),
+      markFailed: vi.fn().mockResolvedValue(undefined),
+      markDeadLettered: vi.fn().mockResolvedValue(undefined),
+      recordDeadLetter: vi.fn().mockResolvedValue(undefined),
     };
     metrics = {
-      received: jest.fn(),
-      sent: jest.fn(),
-      failed: jest.fn(),
-      duplicate: jest.fn(),
-      deadLettered: jest.fn(),
-      renderDuration: jest.fn(),
-      sendDuration: jest.fn(),
+      received: vi.fn(),
+      sent: vi.fn(),
+      failed: vi.fn(),
+      duplicate: vi.fn(),
+      deadLettered: vi.fn(),
+      renderDuration: vi.fn(),
+      sendDuration: vi.fn(),
     };
     logger = {
-      log: jest.fn(),
-      error: jest.fn(),
+      log: vi.fn(),
+      error: vi.fn(),
     };
     processor = new NotificationProcessorService(
       config,

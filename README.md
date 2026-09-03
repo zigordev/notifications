@@ -9,7 +9,7 @@ The service:
 - sends email through configurable SMTP, with Gmail-compatible defaults
 - stores delivery state and attempts in PostgreSQL
 - provides atomic idempotency claims, processing leases for worker-crash recovery, and durable DLT audit records
-- exposes `/health`, `/health/liveness`, `/health/readiness`, and Prometheus `/metrics`
+- exposes `/health` and Prometheus `/metrics`
 - emits JSON logs and OpenTelemetry traces for `platform-ops`
 
 ## Repository layout
