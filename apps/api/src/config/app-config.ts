@@ -30,7 +30,6 @@ export interface SmtpConfig {
 }
 
 export interface TelemetryConfig {
-  tracingEnabled: boolean;
   otlpEndpoint: string;
   serviceName: string;
 }
@@ -120,7 +119,6 @@ export function loadAppConfig(): AppConfig {
       provider: 'gmail-smtp',
     },
     telemetry: {
-      tracingEnabled: booleanValue('MANAGEMENT_TRACING_ENABLED', true),
       otlpEndpoint: stringValue(
         'OTEL_EXPORTER_OTLP_ENDPOINT',
         'http://otel-collector:4318/v1/traces'

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { JsonLogger } from '../common/json-logger';
+import { JsonLogger, recordHealth } from '../observability';
 import { DatabaseService } from '../database/database.service';
 import { NotificationConsumerService } from '../kafka/notification-consumer.service';
 
@@ -28,7 +28,9 @@ export class HealthService {
     private readonly logger: JsonLogger
   ) {}
 
-  async readiness(): Promise<HealthBody> {
+  /** Kafka is required, not optional: this service consumes its topic, and a
+   *  consumer that has dropped out of its group stops working silently. */
+  async check(): Promise<HealthBody> {
     let databaseHealthy = true;
     try {
       await this.database.ping();
@@ -37,13 +39,16 @@ export class HealthService {
       this.logger.warn('PostgreSQL readiness check failed', HealthService.name);
     }
     const kafkaHealthy = this.kafka.isReady();
-    return {
-      status: databaseHealthy && kafkaHealthy ? 'ok' : 'error',
-      service: SERVICE_NAME,
-      components: {
-        db: { status: databaseHealthy ? 'up' : 'down' },
-        kafka: { status: kafkaHealthy ? 'up' : 'down' },
-      },
+    const status = databaseHealthy && kafkaHealthy ? ('ok' as const) : ('error' as const);
+    const components = {
+      db: { status: databaseHealthy ? ('up' as const) : ('down' as const) },
+      kafka: { status: kafkaHealthy ? ('up' as const) : ('down' as const) },
     };
+
+    // The same judgement the response carries, as a metric, so a rule can read
+    // it. Without this the health contract is invisible to alerting.
+    recordHealth(status, components);
+
+    return { status, service: SERVICE_NAME, components };
   }
 }

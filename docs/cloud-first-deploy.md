@@ -219,7 +219,7 @@ APP_DIR="$(ls -1dt /opt/notifications/releases/* | head -n1)"
 cd "$APP_DIR"
 
 sudo docker compose --env-file docker/.env.app.prod -f docker/compose.app.prod.yml exec -T \
-  notifications_api curl -fsS http://127.0.0.1:8080/health/readiness
+  notifications_api curl -fsS http://127.0.0.1:8080/health
 sudo docker compose --env-file docker/.env.app.prod -f docker/compose.app.prod.yml exec -T \
   notifications_api curl -fsS http://127.0.0.1:8080/metrics
 ```

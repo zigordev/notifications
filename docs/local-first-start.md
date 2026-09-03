@@ -168,10 +168,10 @@ If the env file was auto-created and still contains the placeholder OpenBao toke
 
 ## 9. Validate The Local Service
 
-Check readiness:
+Check health:
 
 ```bash
-curl -fsS http://localhost:18080/health/readiness
+curl -fsS http://localhost:18080/health
 ```
 
 Check metrics:
@@ -182,7 +182,7 @@ curl -fsS http://localhost:18080/metrics
 
 Useful local URLs:
 
-- API readiness: `http://localhost:18080/health/readiness`
+- API health: `http://localhost:18080/health`
 - metrics: `http://localhost:18080/metrics`
 - Redpanda Console (from `platform-ops`): `http://localhost:8081`
 

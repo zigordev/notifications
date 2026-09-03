@@ -16,7 +16,10 @@ module.exports = {
     node: true,
     jest: true,
   },
-  ignorePatterns: ['dist', 'coverage'],
+  // `src/observability` is vendored from platform-ops and formatted there.
+  // Each repo's lint config differs slightly, so linting a generated file
+  // here only produces churn the sync script would overwrite.
+  ignorePatterns: ['dist', 'coverage', 'src/observability/**'],
   rules: {
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',

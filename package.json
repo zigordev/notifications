@@ -34,7 +34,8 @@
     "test:cov": "npm run test:cov --workspace @notifications/api",
     "test:integration": "bash ./scripts/ci-integration.sh",
     "test:secrets:gitleaks": "./scripts/precommit-gitleaks.sh",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "audit:prod:gate": "node ./scripts/audit-prod-gate.mjs"
   },
   "overrides": {
     "multer": "2.2.0"

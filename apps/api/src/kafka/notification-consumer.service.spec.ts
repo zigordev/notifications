@@ -1,4 +1,5 @@
-jest.mock('kafkajs', () => {
+import { vi, type Mock, type Mocked } from 'vitest';
+vi.mock('kafkajs', () => {
   const handlers = new Map<string, (event: unknown) => void>();
   const compressionCodecs: Record<number, unknown> = {};
   const consumer = {
@@ -7,24 +8,24 @@ jest.mock('kafkajs', () => {
       DISCONNECT: 'DISCONNECT',
       CRASH: 'CRASH',
     },
-    on: jest.fn((event: string, handler: (event: unknown) => void) => {
+    on: vi.fn((event: string, handler: (event: unknown) => void) => {
       handlers.set(event, handler);
     }),
-    connect: jest.fn(),
-    subscribe: jest.fn(),
-    run: jest.fn(),
-    disconnect: jest.fn(),
-    commitOffsets: jest.fn(),
+    connect: vi.fn(),
+    subscribe: vi.fn(),
+    run: vi.fn(),
+    disconnect: vi.fn(),
+    commitOffsets: vi.fn(),
   };
   const producer = {
-    connect: jest.fn(),
-    disconnect: jest.fn(),
-    send: jest.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    send: vi.fn(),
   };
   return {
-    Kafka: jest.fn(() => ({
-      consumer: jest.fn(() => consumer),
-      producer: jest.fn(() => producer),
+    Kafka: vi.fn(() => ({
+      consumer: vi.fn(() => consumer),
+      producer: vi.fn(() => producer),
     })),
     CompressionCodecs: compressionCodecs,
     CompressionTypes: { Snappy: 2 },
@@ -34,7 +35,7 @@ jest.mock('kafkajs', () => {
 });
 
 import { AppConfig } from '../config/app-config';
-import { JsonLogger } from '../common/json-logger';
+import { JsonLogger } from '../observability';
 import { NotificationProcessorService } from '../notifications/notification-processor.service';
 import { EachBatchPayload } from 'kafkajs';
 import { RetryExecutor } from './retry-executor';
@@ -43,7 +44,7 @@ import { NotificationConsumerService } from './notification-consumer.service';
 interface KafkaMockState {
   compressionCodecs: Record<number, unknown>;
   consumer: {
-    commitOffsets: jest.Mock;
+    commitOffsets: Mock;
   };
   handlers: Map<string, (event: unknown) => void>;
 }
@@ -58,8 +59,15 @@ describe('NotificationConsumerService lifecycle', () => {
       emailDltTopic: 'notification.email.requested.v1.DLT',
     },
   } as AppConfig;
-  const kafka = jest.requireMock<{ __testing: KafkaMockState }>('kafkajs').__testing;
-  let logger: jest.Mocked<Pick<JsonLogger, 'error' | 'log' | 'warn'>>;
+  // Vitest has no `requireMock`: once `vi.mock` has replaced the module, a
+  // plain import *is* the mock. It has to be awaited inside the suite because
+  // `vi.mock` is hoisted above the imports.
+  let kafka: KafkaMockState;
+
+  beforeAll(async () => {
+    kafka = ((await import('kafkajs')) as unknown as { __testing: KafkaMockState }).__testing;
+  });
+  let logger: Mocked<Pick<JsonLogger, 'error' | 'log' | 'warn'>>;
   let consumer: NotificationConsumerService;
 
   it('registers Snappy decompression for Kafka compatibility', () => {
@@ -68,14 +76,14 @@ describe('NotificationConsumerService lifecycle', () => {
 
   it('resolves each processed batch offset before committing its successor', async () => {
     const processor = {
-      process: jest.fn().mockResolvedValue('sent'),
+      process: vi.fn().mockResolvedValue('sent'),
     };
     const retryExecutor = {
-      execute: jest.fn(async (operation: () => Promise<unknown>) => operation()),
+      execute: vi.fn(async (operation: () => Promise<unknown>) => operation()),
     };
     const offset = '7';
-    const resolveOffset = jest.fn();
-    const heartbeat = jest.fn().mockResolvedValue(undefined);
+    const resolveOffset = vi.fn();
+    const heartbeat = vi.fn().mockResolvedValue(undefined);
     const service = new NotificationConsumerService(
       config,
       processor as unknown as NotificationProcessorService,
@@ -113,9 +121,9 @@ describe('NotificationConsumerService lifecycle', () => {
   beforeEach(() => {
     kafka.handlers.clear();
     logger = {
-      error: jest.fn(),
-      log: jest.fn(),
-      warn: jest.fn(),
+      error: vi.fn(),
+      log: vi.fn(),
+      warn: vi.fn(),
     };
     consumer = new NotificationConsumerService(
       config,
@@ -134,7 +142,7 @@ describe('NotificationConsumerService lifecycle', () => {
   });
 
   it('stays alive for an automatically restarting crash', () => {
-    const kill = jest.spyOn(process, 'kill').mockImplementation(() => true);
+    const kill = vi.spyOn(process, 'kill').mockImplementation(() => true);
     kafka.handlers.get('GROUP_JOIN')?.({});
 
     kafka.handlers.get('CRASH')?.({
@@ -158,7 +166,7 @@ describe('NotificationConsumerService lifecycle', () => {
 
   it('requests a clean process shutdown for a non-restarting crash', () => {
     const previousExitCode = process.exitCode;
-    const kill = jest.spyOn(process, 'kill').mockImplementation(() => true);
+    const kill = vi.spyOn(process, 'kill').mockImplementation(() => true);
 
     try {
       kafka.handlers.get('CRASH')?.({

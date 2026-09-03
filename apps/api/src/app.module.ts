@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { JsonLogger } from './common/json-logger';
+import { ObservabilityModule } from './observability';
 import { APP_CONFIG, loadAppConfig } from './config/app-config';
 import { DatabaseService } from './database/database.service';
 import {
@@ -11,7 +11,6 @@ import { HealthController } from './health/health.controller';
 import { HealthService } from './health/health.service';
 import { NotificationConsumerService } from './kafka/notification-consumer.service';
 import { RetryExecutor } from './kafka/retry-executor';
-import { MetricsController } from './metrics/metrics.controller';
 import { NotificationMetricsService } from './metrics/notification-metrics.service';
 import { NotificationProcessorService } from './notifications/notification-processor.service';
 import { NotificationRepository } from './notifications/notification.repository';
@@ -19,13 +18,14 @@ import { TelemetryLifecycleService } from './telemetry-lifecycle.service';
 import { TemplateCatalogService } from './templates/template-catalog.service';
 
 @Module({
-  controllers: [HealthController, MetricsController],
+  // Brings `/metrics`, the shared prom-client registry, and the JSON logger.
+  imports: [ObservabilityModule],
+  controllers: [HealthController],
   providers: [
     {
       provide: APP_CONFIG,
       useFactory: loadAppConfig,
     },
-    JsonLogger,
     DatabaseService,
     TemplateCatalogService,
     {
