@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/zigordev/notifications/compare/v0.1.7...v0.1.8) (2026-09-04)
+
+
+### Bug Fixes
+
+* **ci:** raise commitlint header-max-length to fit Dependabot titles ([c178897](https://github.com/zigordev/notifications/commit/c17889780907fe5d3d7af4ec82d779b792e0b1f1))
+
 ## [0.1.7](https://github.com/zigordev/notifications/compare/v0.1.6...v0.1.7) (2026-09-04)
 
 
