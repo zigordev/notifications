@@ -41,7 +41,7 @@
     "multer": "2.2.0"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.4.2",
+    "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^20.4.2",
     "husky": "^9.1.7",
     "prettier": "^3.6.2"
