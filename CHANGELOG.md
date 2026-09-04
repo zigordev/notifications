@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.1.7](https://github.com/zigordev/notifications/compare/v0.1.6...v0.1.7) (2026-09-04)
+
+
+### Features
+
+* migrate notifications service to TypeScript ([0619de8](https://github.com/zigordev/notifications/commit/0619de857992c7c72ce0464826f854b200a5be73))
+* **observability:** converge on the shared health/metrics/tracing kit ([f24c92c](https://github.com/zigordev/notifications/commit/f24c92c808f286ce72688dbda5a0c92262acccf7))
+* **security:** set security headers with helmet ([967301d](https://github.com/zigordev/notifications/commit/967301d92cd6205731b9801bca26e4f97aee54f6))
+* **templates:** add the cv contact-received email ([5736126](https://github.com/zigordev/notifications/commit/57361268a052905c1c2ee58ce833786485ec60ec))
+
+
+### Bug Fixes
+
+* **ci:** grant gitleaks the pull-requests:read it needs on Dependabot PRs ([06c198c](https://github.com/zigordev/notifications/commit/06c198c49b08b57a0baaf8a0a57df02c77332018))
+* **ci:** retry npm audit on transient registry failures ([cad9749](https://github.com/zigordev/notifications/commit/cad97493d113d40b881cc9f0773a68f2076c2e02))
+* **ci:** stop format:check from failing on generated CHANGELOG.md ([d38f02c](https://github.com/zigordev/notifications/commit/d38f02c627cbdffbcf8a68476a076ef2971d66e3))
+* **docker:** stop the husky prepare script breaking the image build ([f63c648](https://github.com/zigordev/notifications/commit/f63c648e670c7f2c7e6f1d756f095d38b9f4b7d6))
+* **security:** strip the bundled npm CLI and patch Alpine at build time ([66a4d50](https://github.com/zigordev/notifications/commit/66a4d501a6a8c0079d7c189effdc8b192fb5498b))
+
 ## [0.1.6](https://github.com/zigordev/notifications/compare/v0.1.5...v0.1.6) (2026-06-29)
 
 ### Features
