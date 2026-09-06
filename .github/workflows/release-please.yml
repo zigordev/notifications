@@ -5,6 +5,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Two merges in quick succession would otherwise start two runs that both
+# try to create the same release branch, tag and pull request. Queued rather
+# than cancelled: a run interrupted between tagging and publishing leaves
+# state the next one has to reconcile.
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write
@@ -12,6 +20,7 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v4
         with:
