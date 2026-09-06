@@ -17,6 +17,24 @@ updates:
       default-days: 7
     open-pull-requests-limit: 5
     groups:
+      # First on purpose. Dependabot puts a dependency in the first group it
+      # matches, and the two groups below would otherwise split the Nest
+      # packages apart by dependency-type — common and core are production,
+      # testing and cli are development.
+      #
+      # They cannot be split. The Nest packages peer-depend on each other by
+      # major: core@12 requires common@^12 and platform-express@^12, and
+      # testing@12 requires all three. A single-package major is not merely
+      # risky, it cannot resolve at all — #47 and #48 sat open here, each
+      # individually unmergeable, and #35 (@nestjs/schematics, the one
+      # package with no peer tying it to the others) did merge and broke
+      # every `npm install` in this repository until it was reverted.
+      #
+      # No update-types here, so majors are included and the next Nest major
+      # arrives as one PR moving every @nestjs/* together. Auto-merge still
+      # holds majors for a human; this only makes what it holds coherent.
+      nestjs:
+        patterns: ['@nestjs/*']
       dev-dependencies:
         dependency-type: development
         update-types: [minor, patch]
