@@ -17,6 +17,7 @@ jobs:
   secrets-scan:
     name: Secrets Scan (Gitleaks)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # gitleaks-action calls GET /pulls/{n}/commits to scope its scan to the PR's
     # own commits. The workflow-level `contents: read` above doesn't cover that
     # call, and Dependabot-triggered runs get no implicit permissions beyond
@@ -197,6 +198,7 @@ jobs:
   sast:
     name: SAST (Semgrep)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Semgrep rather than CodeQL: CodeQL code scanning on a *private* repository
     # requires GitHub Code Security, a paid add-on. The CodeQL workflow beside
     # this one is gated on `!repository.private` for that reason and never runs.
