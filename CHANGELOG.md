@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.8](https://github.com/zigordev/notifications/compare/v0.1.7...v0.1.8) (2026-09-06)
+
+
+### Bug Fixes
+
+* **ci:** merge with a PAT so push-triggered workflows still run ([#52](https://github.com/zigordev/notifications/issues/52)) ([c2a6ea3](https://github.com/zigordev/notifications/commit/c2a6ea3569c5835ba1988fbd0a60103d149cc96a))
+* **ci:** raise commitlint header-max-length to fit Dependabot titles ([a4be950](https://github.com/zigordev/notifications/commit/a4be95040789d1a90ac24f0d8c04deb497be9e0e))
+* **deps:** realign @nestjs/schematics with the Nest 11 stack ([#53](https://github.com/zigordev/notifications/issues/53)) ([230753b](https://github.com/zigordev/notifications/commit/230753bb7dce9ba2569819d8b3c6fda6ecfa9644))
+
 ## [0.1.7](https://github.com/zigordev/notifications/compare/v0.1.6...v0.1.7) (2026-09-04)
 
 
