@@ -42,3 +42,15 @@ ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "apps/api/dist/main.js"]
 
 FROM prod AS local
+
+FROM deps AS dev
+ENV NODE_ENV=development
+ENV OTEL_SERVICE_NAME=notifications-api
+RUN apk add --no-cache ca-certificates curl jq tini
+COPY apps/api apps/api
+COPY scripts/openbao-run.sh ./scripts/openbao-run.sh
+RUN chmod +x ./scripts/openbao-run.sh
+WORKDIR /app/apps/api
+EXPOSE 8080
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["npm", "run", "start:dev"]

@@ -174,5 +174,12 @@ if [ "$db_exists" != "1" ]; then
     sh -lc "psql -U \"$DB_USER\" -d notifications -c \"CREATE DATABASE \\\"$DB_NAME\\\";\""
 fi
 
+if [ "${LOCAL_STACK_MODE:-}" = "dev" ]; then
+  echo "Starting the notifications stack in watch mode."
+  exec docker compose --env-file "$APP_ENV_FILE" \
+    -f docker/compose.app.local.yml -f docker/compose.app.dev.yml \
+    up --build --remove-orphans --watch
+fi
+
 docker compose --env-file "$APP_ENV_FILE" -f docker/compose.app.local.yml up -d --build --force-recreate --remove-orphans
 echo "Notifications stack started."
