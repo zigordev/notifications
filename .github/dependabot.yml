@@ -17,6 +17,13 @@ updates:
       default-days: 7
     open-pull-requests-limit: 5
     groups:
+      # vitest ships as a family that must move together. @vitest/coverage-v8
+      # and @vitest/ui both peer-depend on an exact vitest version, so a
+      # single-package major does not resolve at all — coverage-v8@4 wanting
+      # vitest@4.1.11 against ui@3.2.7 wanting vitest@3.2.7 is not a risky
+      # merge, it is an impossible one. Same shape as the @nestjs group above.
+      vitest:
+        patterns: ['vitest', '@vitest/*']
       # First on purpose. Dependabot puts a dependency in the first group it
       # matches, and the two groups below would otherwise split the Nest
       # packages apart by dependency-type — common and core are production,
