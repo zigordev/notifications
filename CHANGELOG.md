@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/zigordev/notifications/compare/v0.1.8...v0.1.9) (2026-09-07)
+
+
+### Features
+
+* **docker:** run the worker under compose watch for local development ([#69](https://github.com/zigordev/notifications/issues/69)) ([193e152](https://github.com/zigordev/notifications/commit/193e152702185f74885a360de5b688eea4fbc006))
+
 ## [0.1.8](https://github.com/zigordev/notifications/compare/v0.1.7...v0.1.8) (2026-09-06)
 
 
