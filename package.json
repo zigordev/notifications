@@ -21,6 +21,7 @@
     "format:check": "prettier --check \"apps/**/*.ts\" \".github/**/*.{yml,yaml}\" \"docker/**/*.{yml,yaml}\" \"docs/**/*.md\" \"*.{json,md}\" \"!CHANGELOG.md\"",
     "lint": "npm run lint --workspaces --if-present",
     "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "local:dev": "bash ./scripts/local-stack-dev.sh",
     "local:down": "bash ./scripts/local-stack-down.sh",
     "local:reset": "bash ./scripts/local-stack-reset.sh",
     "local:token": "bash ../platform-ops/scripts/provision-local-app-token.sh notifications",
