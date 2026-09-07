@@ -1,4 +1,4 @@
-FROM node:24-alpine AS base
+FROM node:26-alpine AS base
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
@@ -16,7 +16,7 @@ RUN npm run build --workspace @notifications/api
 FROM base AS prod-deps
 RUN npm ci --omit=dev --ignore-scripts
 
-FROM node:24-alpine AS prod
+FROM node:26-alpine AS prod
 WORKDIR /app
 ENV NODE_ENV=production
 ENV OTEL_SERVICE_NAME=notifications-api
