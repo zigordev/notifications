@@ -1,0 +1,22 @@
+services:
+  notifications_api:
+    build:
+      target: dev
+    environment:
+      NODE_ENV: development
+    command: ['sh', '-lc', 'exec /app/scripts/openbao-run.sh npm run start:dev']
+    develop:
+      watch:
+        - action: sync
+          path: ../apps/api/src
+          target: /app/apps/api/src
+        - action: sync+restart
+          path: ../apps/api/nest-cli.json
+          target: /app/apps/api/nest-cli.json
+        - action: sync+restart
+          path: ../apps/api/tsconfig.json
+          target: /app/apps/api/tsconfig.json
+        - action: rebuild
+          path: ../package-lock.json
+        - action: rebuild
+          path: ../apps/api/package.json

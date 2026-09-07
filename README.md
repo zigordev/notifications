@@ -50,9 +50,17 @@ Redpanda, network, and observability services), use:
 
 ```bash
 npm run local:up
+npm run local:dev
 npm run local:down
 npm run local:reset
 ```
+
+`local:up` builds and runs the production image. `local:dev` runs the same
+preflight and the same port, but builds the `dev` stage and runs
+`nest start --watch` under `docker compose watch`, which copies changed
+`apps/api/src` into the running container. `package.json` and
+`package-lock.json` trigger a rebuild rather than a sync. Both modes are the
+same service on the same port, so run one at a time.
 
 The migration retains the original external Kafka, SMTP, PostgreSQL V1, health, metrics, deployment, and OpenBao interfaces. New V2 database objects add processing-lease ownership and durable dead-letter auditing.
 
