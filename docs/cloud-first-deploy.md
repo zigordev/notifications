@@ -81,6 +81,9 @@ Review `docker/.env.app.prod` before the first deploy.
 
 Important values:
 
+- `APP_ENVIRONMENT`
+  - names the environment this deployment is; keep `prod`
+  - any other value prefixes every outbound subject with `[<value>]`
 - `TRUST_PROXY`
   - whether the service trusts proxy headers from the shared ingress
 - `OTEL_EXPORTER_OTLP_ENDPOINT`

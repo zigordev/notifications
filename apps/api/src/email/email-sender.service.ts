@@ -33,11 +33,19 @@ export class EmailSenderService {
     @Inject(EMAIL_TRANSPORT) private readonly transport: EmailTransport
   ) {}
 
+  private subjectFor(subject: string): string {
+    const environment = this.config.environment?.trim();
+    if (!environment || environment === 'prod') {
+      return subject;
+    }
+    return `[${environment}] ${subject}`;
+  }
+
   async send(to: string, replyTo: string | null | undefined, email: RenderedEmail): Promise<void> {
     const message = {
       from: this.config.smtp.from,
       to,
-      subject: email.subject,
+      subject: this.subjectFor(email.subject),
       html: email.html,
       ...(replyTo?.trim() ? { replyTo } : {}),
     };

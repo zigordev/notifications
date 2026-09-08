@@ -123,6 +123,8 @@ Set or review these values:
   - Gmail account used for SMTP auth
 - `SMTP_FROM`
   - sender address shown in mail
+- `APP_ENVIRONMENT`
+  - keep `local` so mail sent from this machine arrives as `[local] <subject>`
 - `TRUST_PROXY`
   - usually `false` locally
 - `OTEL_EXPORTER_OTLP_ENDPOINT`

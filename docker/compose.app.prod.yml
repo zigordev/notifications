@@ -37,6 +37,7 @@ services:
     restart: unless-stopped
     environment:
       PORT: 8080
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:?APP_ENVIRONMENT is required}
       DB_HOST: notifications-postgres
       DB_PORT: 5432
       DB_USER: notifications_admin

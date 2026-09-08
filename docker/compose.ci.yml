@@ -88,6 +88,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
       NOTIFICATIONS_EMAIL_TOPIC: notification.email.requested.v1
       NOTIFICATIONS_EMAIL_DLT_TOPIC: notification.email.requested.v1.DLT
+      APP_ENVIRONMENT: ci
       SMTP_HOST: smtp
       SMTP_PORT: 1025
       SMTP_AUTH: 'false'
@@ -128,6 +129,7 @@ services:
       NOTIFICATIONS_EMAIL_TOPIC: notification.email.requested.v1
       NOTIFICATIONS_EMAIL_DLT_TOPIC: notification.email.requested.v1.DLT
       NOTIFICATIONS_PROCESSING_LEASE_MS: 3000
+      APP_ENVIRONMENT: ci
       SMTP_HOST: smtp
       SMTP_PORT: 1025
       SMTP_AUTH: 'false'
