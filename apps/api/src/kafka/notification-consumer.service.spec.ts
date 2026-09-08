@@ -23,10 +23,12 @@ vi.mock('kafkajs', () => {
     send: vi.fn(),
   };
   return {
-    Kafka: vi.fn(() => ({
-      consumer: vi.fn(() => consumer),
-      producer: vi.fn(() => producer),
-    })),
+    Kafka: vi.fn(function () {
+      return {
+        consumer: vi.fn(() => consumer),
+        producer: vi.fn(() => producer),
+      };
+    }),
     CompressionCodecs: compressionCodecs,
     CompressionTypes: { Snappy: 2 },
     logLevel: { ERROR: 1 },
