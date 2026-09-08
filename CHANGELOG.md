@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/zigordev/notifications/compare/v0.1.9...v0.1.10) (2026-09-08)
+
+
+### Features
+
+* **email:** tag outbound subjects with the environment ([#78](https://github.com/zigordev/notifications/issues/78)) ([1787702](https://github.com/zigordev/notifications/commit/1787702484ced0260af4c9f3853de4699747d19e))
+
 ## [0.1.9](https://github.com/zigordev/notifications/compare/v0.1.8...v0.1.9) (2026-09-07)
 
 
