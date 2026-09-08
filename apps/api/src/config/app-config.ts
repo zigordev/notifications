@@ -36,6 +36,7 @@ export interface TelemetryConfig {
 
 export interface AppConfig {
   port: number;
+  environment: string;
   trustProxy: boolean;
   database: DatabaseConfig;
   kafka: KafkaConfig;
@@ -88,6 +89,7 @@ export function loadAppConfig(): AppConfig {
 
   return {
     port: positiveInteger('PORT', 8080),
+    environment: stringValue('APP_ENVIRONMENT', 'local'),
     trustProxy: booleanValue('TRUST_PROXY', false),
     database: {
       host: stringValue('DB_HOST', 'localhost'),
