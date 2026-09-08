@@ -4,6 +4,7 @@ import { EmailSenderService } from './email-sender.service';
 
 describe('EmailSenderService', () => {
   const config = {
+    environment: 'prod',
     smtp: {
       from: 'notifications@example.com',
     },
@@ -43,5 +44,34 @@ describe('EmailSenderService', () => {
     expect(sendMail).toHaveBeenCalledWith(
       expect.not.objectContaining({ replyTo: expect.anything() })
     );
+  });
+
+  it('tags the subject with the environment outside prod', async () => {
+    const sendMail = vi.fn().mockResolvedValue(undefined);
+    const sender = new EmailSenderService(
+      { ...config, environment: 'local' },
+      {
+        sendMail,
+      }
+    );
+
+    await sender.send('user@example.com', null, {
+      subject: 'Welcome',
+      html: '<p>Hello</p>',
+    });
+
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ subject: '[local] Welcome' }));
+  });
+
+  it('leaves the subject untouched in prod', async () => {
+    const sendMail = vi.fn().mockResolvedValue(undefined);
+    const sender = new EmailSenderService(config, { sendMail });
+
+    await sender.send('user@example.com', null, {
+      subject: 'Welcome',
+      html: '<p>Hello</p>',
+    });
+
+    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ subject: 'Welcome' }));
   });
 });

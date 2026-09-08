@@ -85,6 +85,7 @@ jobs:
       - name: Validate compose manifests
         env:
           POSTGRES_PASSWORD: app
+          APP_ENVIRONMENT: prod
           API_IMAGE: notifications-api:ci
           OPENBAO_TOKEN: ci-openbao-token
           TRUST_PROXY: 'false'
