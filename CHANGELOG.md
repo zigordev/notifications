@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.14](https://github.com/zigordev/notifications/compare/v0.1.13...v0.1.14) (2026-09-09)
+
+
+### Features
+
+* **api:** send RFC 9457 problem details and mount health on its prefix ([#87](https://github.com/zigordev/notifications/issues/87)) ([9c8f6a5](https://github.com/zigordev/notifications/commit/9c8f6a59038b33233e9638deb82a4391a75e4316))
+
 ## [0.1.13](https://github.com/zigordev/notifications/compare/v0.1.12...v0.1.13) (2026-09-09)
 
 
