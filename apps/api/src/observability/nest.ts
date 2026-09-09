@@ -1,6 +1,3 @@
-// DO NOT EDIT. Vendored from platform-ops/packages/observability.
-// Change it there and run: bash platform-ops/scripts/sync-observability.sh
-
 import { Controller, Get, Header, Injectable, LoggerService, Module } from '@nestjs/common';
 import { Registry } from 'prom-client';
 import { writeLogRecord } from './json-logger';
