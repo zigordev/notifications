@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { ProblemDetailsFilter } from './common/http/problem-details.filter';
 import { httpMetricsMiddleware, JsonLogger } from './observability';
 import { APP_CONFIG, AppConfig } from './config/app-config';
 
@@ -30,6 +31,7 @@ async function bootstrap(): Promise<void> {
     })
   );
 
+  app.useGlobalFilters(new ProblemDetailsFilter());
   app.useLogger(app.get(JsonLogger));
   // `http_requests_total` and `http_request_duration_seconds` — the two metrics
   // every recording rule and alert in platform-ops aggregates on. Without this
