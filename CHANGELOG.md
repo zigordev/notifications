@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.13](https://github.com/zigordev/notifications/compare/v0.1.12...v0.1.13) (2026-09-09)
+
+
+### Bug Fixes
+
+* **api:** send a content security policy instead of disabling it ([#85](https://github.com/zigordev/notifications/issues/85)) ([1e62daf](https://github.com/zigordev/notifications/commit/1e62daf66f19dbcb3e7d5c9d10233f473f4f160e))
+
 ## [0.1.12](https://github.com/zigordev/notifications/compare/v0.1.11...v0.1.12) (2026-09-09)
 
 
