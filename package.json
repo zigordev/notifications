@@ -14,7 +14,9 @@
   ],
   "scripts": {
     "audit": "npm audit --audit-level=high",
+    "audit:prod:gate": "node ./scripts/audit-prod-gate.mjs",
     "build": "npm run build --workspaces --if-present",
+    "ci:integration:local": "npm run test:integration",
     "ci:quality:local": "npm run format:check && npm run lint && npm run typecheck && npm run test:cov && npm run build",
     "clean": "npm run clean --workspaces --if-present",
     "format": "prettier --write \"apps/**/*.ts\" \".github/**/*.{yml,yaml}\" \"docker/**/*.{yml,yaml}\" \"docs/**/*.md\" \"*.{json,md}\" \"!CHANGELOG.md\"",
@@ -26,7 +28,7 @@
     "local:reset": "bash ./scripts/local-stack-reset.sh",
     "local:token": "bash ../platform-ops/scripts/provision-local-app-token.sh notifications",
     "local:up": "bash ./scripts/local-stack-up.sh",
-    "precommit:checks": "npm run test:secrets:gitleaks && npm run ci:quality:local",
+    "precommit:checks": "npm run test:secrets:gitleaks && npm run ci:quality:local && npm run ci:integration:local",
     "prepare": "node ./scripts/prepare-husky.mjs",
     "start": "npm run start --workspace @notifications/api",
     "start:dev": "npm run start:dev --workspace @notifications/api",
@@ -35,8 +37,7 @@
     "test:cov": "npm run test:cov --workspace @notifications/api",
     "test:integration": "bash ./scripts/ci-integration.sh",
     "test:secrets:gitleaks": "./scripts/precommit-gitleaks.sh",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "audit:prod:gate": "node ./scripts/audit-prod-gate.mjs"
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "overrides": {
     "multer": "2.3.0"
