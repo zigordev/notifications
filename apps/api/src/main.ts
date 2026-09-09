@@ -16,11 +16,19 @@ async function bootstrap(): Promise<void> {
     bufferLogs: true,
   });
   const config = app.get<AppConfig>(APP_CONFIG);
-  // Security headers. CSP is off: this is a JSON API, where a content policy
-  // buys nothing, and both gpool and kini serve Swagger UI, which needs the
-  // inline scripts a default helmet CSP would block. The headers that matter
-  // here — HSTS, nosniff, frame-options, referrer-policy — are all still set.
-  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        useDefaults: false,
+        directives: {
+          'default-src': ["'none'"],
+          'base-uri': ["'none'"],
+          'form-action': ["'none'"],
+          'frame-ancestors': ["'none'"],
+        },
+      },
+    })
+  );
 
   app.useLogger(app.get(JsonLogger));
   // `http_requests_total` and `http_request_duration_seconds` — the two metrics
