@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/zigordev/notifications/compare/v0.1.11...v0.1.12) (2026-09-09)
+
+
+### Bug Fixes
+
+* **release:** keep the workspace version in package-lock.json in step ([#80](https://github.com/zigordev/notifications/issues/80)) ([a6b8bd1](https://github.com/zigordev/notifications/commit/a6b8bd13f03c8915589b16769f2a00251ebcbd5c))
+
 ## [0.1.11](https://github.com/zigordev/notifications/compare/v0.1.10...v0.1.11) (2026-09-09)
 
 
