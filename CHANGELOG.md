@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/zigordev/notifications/compare/v0.1.10...v0.1.11) (2026-09-09)
+
+
+### Bug Fixes
+
+* **deps:** take the patched multer and nodemailer ([#82](https://github.com/zigordev/notifications/issues/82)) ([bb2b352](https://github.com/zigordev/notifications/commit/bb2b352d23b6b85a7b80b39042cd28b2deccb58a))
+
 ## [0.1.10](https://github.com/zigordev/notifications/compare/v0.1.9...v0.1.10) (2026-09-08)
 
 
