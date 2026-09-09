@@ -15,11 +15,11 @@ import { HealthService } from './health.service';
  * probe it would turn a dependency blip into a restart loop; a separate
  * liveness path would be needed then.
  */
-@Controller()
+@Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
-  @Get('health')
+  @Get()
   async health(@Res() response: Response): Promise<void> {
     const body = await this.healthService.check();
     response.status(body.status === 'ok' ? 200 : 503).json(body);
