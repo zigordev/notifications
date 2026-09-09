@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.15](https://github.com/zigordev/notifications/compare/v0.1.14...v0.1.15) (2026-09-09)
+
+
+### Bug Fixes
+
+* **api:** log why a 5xx happened, even though the response will not say ([#91](https://github.com/zigordev/notifications/issues/91)) ([fbf6b8e](https://github.com/zigordev/notifications/commit/fbf6b8ee2588f84efbaef4336c199a1e29a66a31))
+
 ## [0.1.14](https://github.com/zigordev/notifications/compare/v0.1.13...v0.1.14) (2026-09-09)
 
 
