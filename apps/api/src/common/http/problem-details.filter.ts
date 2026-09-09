@@ -19,8 +19,11 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     // The request method, path and timestamp the body used to repeat are on
     // every log line already, keyed by traceId.
     if (problem.status >= 500) {
+      // The response withholds the reason; the log must not. Without this a
+      // 500 says only HTTP.INTERNAL_ERROR, in the body and in the log alike.
+      const reason = exception instanceof Error ? exception.message : String(exception);
       this.logger.error(
-        `${request.method} ${request.url} - ${problem.status} - ${problem.code}`,
+        `${request.method} ${request.url} - ${problem.status} - ${problem.code}: ${reason}`,
         exception instanceof Error ? exception.stack : undefined
       );
     } else {
