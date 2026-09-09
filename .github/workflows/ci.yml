@@ -70,8 +70,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: api-coverage
+          name: coverage-api
           path: apps/api/coverage
+          retention-days: 7
           if-no-files-found: warn
 
   compose-validation:
@@ -162,20 +163,45 @@ jobs:
         with:
           image: notifications-api:ci
           format: spdx-json
-          output-file: artifacts/sbom-api.spdx.json
+          output-file: artifacts/sbom-notifications-api.spdx.json
           upload-artifact: false
           upload-release-assets: false
 
       - name: Validate SBOM
         run: |
-          test -s artifacts/sbom-api.spdx.json
-          jq -e '.spdxVersion and (.packages | type == "array")' artifacts/sbom-api.spdx.json
+          test -s artifacts/sbom-notifications-api.spdx.json
+          jq -e '.spdxVersion and (.packages | type == "array")' artifacts/sbom-notifications-api.spdx.json
 
-      - name: Upload SBOM artifact
+      - name: Upload SBOM
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: sbom
-          path: artifacts/sbom-api.spdx.json
+          name: sbom-api
+          path: artifacts/sbom-notifications-api.spdx.json
+          retention-days: 30
+          if-no-files-found: error
+
+      # Twice on purpose: the JSON run records what was found and never fails,
+      # so the artifact exists even when the gate below stops the build. The
+      # vulnerability database is cached after the first scan.
+      - name: Trivy report
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: notifications-api:ci
+          format: json
+          output: artifacts/trivy-notifications-api.json
+          exit-code: '0'
+          ignore-unfixed: true
+          trivyignores: .trivyignore
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+
+      - name: Upload Trivy report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trivy-api
+          path: artifacts/trivy-notifications-api.json
+          retention-days: 30
           if-no-files-found: error
 
       - name: Trivy scan
