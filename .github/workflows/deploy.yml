@@ -97,7 +97,7 @@ jobs:
           if aws ecr describe-images --repository-name "$api_repo_name" --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
             echo "API image already exists in ECR with immutable tag, reusing: $api_image"
           else
-            docker build -f Dockerfile --target prod -t "$api_image" .
+            docker build -f apps/api/Dockerfile --target prod -t "$api_image" .
             docker push "$api_image"
           fi
           echo "api_image=$api_image" >> "$GITHUB_OUTPUT"
