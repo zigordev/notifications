@@ -26,13 +26,20 @@ services:
       retries: 20
     logging: *default-logging
     networks:
-      notifications_shared:
+      platform_ops_shared:
         aliases:
           - notifications-postgres
 
   notifications_api:
     security_opt:
       - no-new-privileges:true
+    init: true
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8080/health >/dev/null 2>&1 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     image: ${API_IMAGE:?API_IMAGE is required}
     restart: unless-stopped
     environment:
@@ -69,12 +76,12 @@ services:
     command: ['sh', '-lc', 'exec /app/scripts/openbao-run.sh node apps/api/dist/main.js']
     logging: *default-logging
     networks:
-      notifications_shared:
+      platform_ops_shared:
         aliases:
           - notifications-api
 
 networks:
-  notifications_shared:
+  platform_ops_shared:
     name: platform_ops_shared
     external: true
 
