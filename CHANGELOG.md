@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.16](https://github.com/zigordev/notifications/compare/v0.1.15...v0.1.16) (2026-09-12)
+
+
+### Bug Fixes
+
+* **docker:** build the api image on node 24 ([#93](https://github.com/zigordev/notifications/issues/93)) ([5a8b493](https://github.com/zigordev/notifications/commit/5a8b493a32578b5144061d67f566ecacf1d404d7))
+
 ## [0.1.15](https://github.com/zigordev/notifications/compare/v0.1.14...v0.1.15) (2026-09-09)
 
 
