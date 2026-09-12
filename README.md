@@ -21,7 +21,7 @@ The service:
 
 ## Development
 
-Use the Node and npm versions declared in `.node-version`, `.nvmrc`, and `packageManager`.
+Use the Node version pinned in `.nvmrc` and the npm range declared in `engines`.
 
 ```bash
 npm ci
