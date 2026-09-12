@@ -153,7 +153,7 @@ jobs:
         run: npm run audit:prod:gate
 
       - name: Build prod image
-        run: docker build -f Dockerfile --target prod -t notifications-api:ci .
+        run: docker build -f apps/api/Dockerfile --target prod -t notifications-api:ci .
 
       - name: Prepare artifacts dir
         run: mkdir -p artifacts
