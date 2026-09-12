@@ -119,24 +119,52 @@ jobs:
       # Keyless: cosign gets a short-lived certificate from Fulcio bound to this
       # workflow's OIDC identity and records it in Rekor. No private key to
       # store, rotate or leak.
+      - name: Resolve pushed image digests
+        id: digests
+        env:
+          API_REPOSITORY: ${{ vars.AWS_ECR_API_REPOSITORY_URI }}
+          IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
+        run: |
+          set -euo pipefail
+
+          resolve() {
+            repo_uri="$1"
+            repo_name="${repo_uri#*/}"
+            digest="$(aws ecr describe-images \
+              --repository-name "$repo_name" \
+              --image-ids imageTag="$IMAGE_TAG" \
+              --query 'imageDetails[0].imageDigest' \
+              --output text)"
+
+            if [ -z "$digest" ] || [ "$digest" = "None" ]; then
+              echo "Could not resolve digest for ${repo_uri}:${IMAGE_TAG}" >&2
+              exit 1
+            fi
+            printf '%s@%s' "$repo_uri" "$digest"
+          }
+
+          api_ref="$(resolve "$API_REPOSITORY")"
+
+          echo "api_ref=$api_ref" >> "$GITHUB_OUTPUT"
+          echo "Resolved api_ref: $api_ref"
+
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
       - name: Sign image (keyless)
         env:
-          IMAGES: ${{ steps.image.outputs.api_image }}
+          IMAGES: ${{ steps.digests.outputs.api_ref }}
         run: |
           for image in $IMAGES; do
             [ -n "$image" ] || continue
             # By digest, never by tag: a tag can be repointed after signing.
-            digest="$(docker inspect --format='{{index .RepoDigests 0}}' "$image" 2>/dev/null || echo "$image")"
-            cosign sign --yes "$digest"
-            echo "signed: $digest"
+            cosign sign --yes "$image"
+            echo "signed: $image"
           done
 
       - name: Attach SLSA provenance
         env:
-          IMAGES: ${{ steps.image.outputs.api_image }}
+          IMAGES: ${{ steps.digests.outputs.api_ref }}
           BUILD_REPO: ${{ github.repository }}
           BUILD_SHA: ${{ github.sha }}
           BUILD_REF: ${{ github.ref }}
@@ -149,9 +177,8 @@ jobs:
           JSON
           for image in $IMAGES; do
             [ -n "$image" ] || continue
-            digest="$(docker inspect --format='{{index .RepoDigests 0}}' "$image" 2>/dev/null || echo "$image")"
-            cosign attest --yes --predicate /tmp/provenance.json --type slsaprovenance "$digest"
-            echo "attested: $digest"
+            cosign attest --yes --predicate /tmp/provenance.json --type slsaprovenance "$image"
+            echo "attested: $image"
           done
 
       - name: Upload deploy bundle to S3
