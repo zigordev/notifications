@@ -7,10 +7,10 @@ import { defineConfig } from 'vitest/config';
  * SWC rather than Vitest's default esbuild transform: esbuild does not
  * implement `emitDecoratorMetadata`, which NestJS dependency injection needs.
  *
- * The coverage thresholds and the explicit file list are carried over from the
- * Jest config unchanged. They are deliberately narrow — the list names the
- * modules that are actually unit-tested, so the percentages mean something
- * rather than being diluted by files nobody tests.
+ * The explicit file list is carried over from the Jest config unchanged. It is
+ * deliberately narrow — the list names the modules that are actually unit-tested,
+ * so the percentages mean something rather than being diluted by files nobody
+ * tests. The thresholds sit at what that list reaches today.
  */
 export default defineConfig({
   test: {
@@ -34,10 +34,10 @@ export default defineConfig({
         'src/templates/template-catalog.service.ts',
       ],
       thresholds: {
-        branches: 70,
-        functions: 75,
-        lines: 80,
-        statements: 80,
+        branches: 82,
+        functions: 92,
+        lines: 91,
+        statements: 91,
       },
     },
   },
