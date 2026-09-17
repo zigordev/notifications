@@ -4,7 +4,7 @@ services:
       target: dev
     environment:
       NODE_ENV: development
-    command: ['sh', '-lc', 'exec /app/scripts/openbao-run.sh npm run start:dev']
+    command: ['sh', '-lc', 'exec node /workspace/scripts/openbao-run.mjs -- npm run start:dev']
     develop:
       watch:
         - action: sync

@@ -73,7 +73,7 @@ services:
     depends_on:
       notifications_db:
         condition: service_healthy
-    command: ['sh', '-lc', 'exec /app/scripts/openbao-run.sh node apps/api/dist/main.js']
+    command: ['sh', '-lc', 'exec node /app/scripts/openbao-run.mjs -- node apps/api/dist/main.js']
     logging: *default-logging
     networks:
       platform_ops_shared:
