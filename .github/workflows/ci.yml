@@ -101,6 +101,7 @@ jobs:
           SMTP_FROM: ci@example.com
           SMTP_STARTTLS: 'true'
         run: |
+          docker compose -f docker/compose.app.dev.yml config > /dev/null
           docker compose -f docker/compose.app.local.yml config > /dev/null
           docker compose -f docker/compose.app.prod.yml config > /dev/null
           docker compose -f docker/compose.ci.yml config > /dev/null
