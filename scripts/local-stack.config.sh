@@ -7,7 +7,6 @@ DEV_COMPOSE_FILES=(docker/compose.app.dev.yml)
 OPENBAO_SECRET_PATH="notifications"
 OPENBAO_REQUIRED_KEYS="SMTP_PASS,POSTGRES_PASSWORD"
 OPENBAO_EXPORT_KEYS="POSTGRES_PASSWORD"
-OPENBAO_RUN="scripts/openbao-run.mjs"
 
 DB_SERVICE="notifications_db"
 DB_USER="notifications_admin"

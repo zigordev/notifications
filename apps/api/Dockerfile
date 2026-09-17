@@ -32,8 +32,7 @@ COPY --from=deps-prod --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/apps/api/dist ./apps/api/dist
 COPY --chown=node:node package.json ./package.json
 COPY --chown=node:node apps/api/package.json ./apps/api/package.json
-COPY --chown=node:node scripts/openbao-run.sh ./scripts/openbao-run.sh
-RUN chmod +x ./scripts/openbao-run.sh
+COPY --chown=node:node scripts/openbao-run.mjs ./scripts/openbao-run.mjs
 USER node
 EXPOSE 8080
 CMD ["node", "apps/api/dist/main.js"]
@@ -45,8 +44,7 @@ ENV NODE_ENV=development
 ENV OTEL_SERVICE_NAME=notifications-api
 RUN apk add --no-cache ca-certificates curl jq
 COPY apps/api apps/api
-COPY scripts/openbao-run.sh ./scripts/openbao-run.sh
-RUN chmod +x ./scripts/openbao-run.sh
+COPY scripts/openbao-run.mjs ./scripts/openbao-run.mjs
 WORKDIR /app/apps/api
 EXPOSE 8080
 CMD ["npm", "run", "start:dev"]
