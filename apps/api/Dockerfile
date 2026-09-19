@@ -19,6 +19,7 @@ RUN npm ci --omit=dev --ignore-scripts
 FROM node:24-alpine AS prod
 WORKDIR /app
 ENV NODE_ENV=production
+ENV NODE_OPTIONS=--disable-warning=TimeoutNegativeWarning
 ENV OTEL_SERVICE_NAME=notifications-api
 # apk upgrade pulls the latest Alpine security patches at build time rather
 # than waiting on the upstream node:24-alpine tag to be rebuilt. The npm strip
@@ -41,6 +42,7 @@ FROM prod AS local
 
 FROM deps-build AS dev
 ENV NODE_ENV=development
+ENV NODE_OPTIONS=--disable-warning=TimeoutNegativeWarning
 ENV OTEL_SERVICE_NAME=notifications-api
 RUN apk add --no-cache ca-certificates curl jq
 COPY apps/api apps/api
