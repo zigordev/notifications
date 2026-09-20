@@ -129,6 +129,7 @@ export class NotificationProcessorService {
       );
       await this.repository.markSent(claim.requestId, processingOwner);
       this.metrics.sendDuration(this.config.smtp.provider, event.templateId, durationMs);
+      this.metrics.deliveryDuration(event.sourceApp, event.templateId, event.requestedAt);
       this.metrics.sent(event.sourceApp, event.templateId);
       this.logger.log(
         {

@@ -53,6 +53,7 @@ describe('NotificationProcessorService', () => {
       | 'deadLettered'
       | 'renderDuration'
       | 'sendDuration'
+      | 'deliveryDuration'
     >
   >;
   let logger: Mocked<Pick<JsonLogger, 'debug' | 'error' | 'log' | 'warn'>>;
@@ -89,6 +90,7 @@ describe('NotificationProcessorService', () => {
       deadLettered: vi.fn(),
       renderDuration: vi.fn(),
       sendDuration: vi.fn(),
+      deliveryDuration: vi.fn(),
     };
     logger = {
       log: vi.fn(),

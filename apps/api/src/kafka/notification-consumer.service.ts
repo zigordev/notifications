@@ -20,6 +20,7 @@ import {
   tracer,
 } from '../observability/spans';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
+import { EmailSenderService } from '../email/email-sender.service';
 import { NotificationProcessorService } from '../notifications/notification-processor.service';
 import { RetryExecutor } from './retry-executor';
 
@@ -35,6 +36,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     private readonly processor: NotificationProcessorService,
     private readonly retryExecutor: RetryExecutor,
+    private readonly emailSender: EmailSenderService,
     private readonly logger: JsonLogger
   ) {
     const kafka = new Kafka({
@@ -127,7 +129,12 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         return;
       }
 
-      await this.traceMessage(batchPayload, message);
+      const handled = await this.traceMessage(batchPayload, message);
+
+      // The relay is down and the message is still in the topic. Leaving the
+      // offset where it is redelivers it when the pause lifts, which is the
+      // difference between an outage and a morning of dead-lettered email.
+      if (!handled) return;
 
       batchPayload.resolveOffset(message.offset);
       await this.consumer.commitOffsets([
@@ -141,7 +148,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
     }
   }
 
-  private traceMessage(batchPayload: EachBatchPayload, message: KafkaMessage): Promise<void> {
+  private traceMessage(batchPayload: EachBatchPayload, message: KafkaMessage): Promise<boolean> {
     const { batch } = batchPayload;
     const parent = propagation.extract(otelContext.active(), kafkaTextHeaders(message.headers));
 
@@ -154,7 +161,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
       parent,
       async (span) => {
         try {
-          await this.handleMessage(batchPayload, message);
+          return await this.handleMessage(batchPayload, message);
         } catch (error) {
           recordSpanError(span, error);
           throw error;
@@ -168,7 +175,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
   private async handleMessage(
     batchPayload: EachBatchPayload,
     message: KafkaMessage
-  ): Promise<void> {
+  ): Promise<boolean> {
     const { batch } = batchPayload;
     const payload = message.value?.toString('utf8') ?? '';
 
@@ -204,9 +211,47 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
           async (durationMs) => this.waitWithHeartbeat(durationMs, () => batchPayload.heartbeat())
         );
       } catch (error) {
+        if (!this.emailSender.isAvailable()) {
+          this.pauseForRelayOutage(batch.topic, batch.partition, message.offset, error);
+          return false;
+        }
+
         await this.publishDeadLetter(batch.topic, batch.partition, message, error);
       }
     }
+
+    return true;
+  }
+
+  /**
+   * Stop consuming while the relay is unusable. kafkajs redelivers from the
+   * last committed offset when the pause lifts, so nothing is lost and nothing
+   * is dead-lettered for a failure that has nothing to do with the message.
+   */
+  private pauseForRelayOutage(
+    topic: string,
+    partition: number,
+    offset: string,
+    error: unknown
+  ): void {
+    const backoffMs = this.config.smtp.outageBackoffMs;
+
+    this.consumer.pause([{ topic }]);
+    const resume = setTimeout(() => this.consumer.resume([{ topic }]), backoffMs);
+    resume.unref?.();
+
+    this.logger.warn(
+      {
+        event: 'notification.paused_for_relay',
+        topic,
+        partition,
+        offset,
+        backoffMs,
+        errorClass: errorClass(error),
+        error: errorReason(error),
+      },
+      NotificationConsumerService.name
+    );
   }
 
   private async publishDeadLetter(

@@ -27,6 +27,8 @@ export interface SmtpConfig {
   password: string;
   from: string;
   provider: string;
+  probeIntervalMs: number;
+  outageBackoffMs: number;
 }
 
 export interface TelemetryConfig {
@@ -119,6 +121,8 @@ export function loadAppConfig(): AppConfig {
       password: stringValue('SMTP_PASS', ''),
       from: stringValue('SMTP_FROM', 'noreply@example.com'),
       provider: 'gmail-smtp',
+      probeIntervalMs: positiveInteger('SMTP_PROBE_INTERVAL_MS', 60_000),
+      outageBackoffMs: positiveInteger('SMTP_OUTAGE_BACKOFF_MS', 30_000),
     },
     telemetry: {
       otlpEndpoint: stringValue(

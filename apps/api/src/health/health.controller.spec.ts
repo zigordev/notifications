@@ -17,7 +17,11 @@ describe('HealthController', () => {
     const body = {
       status: 'ok' as const,
       service: 'notifications-api',
-      components: { db: { status: 'up' as const }, kafka: { status: 'up' as const } },
+      components: {
+        db: { status: 'up' as const },
+        kafka: { status: 'up' as const },
+        smtp: { status: 'up' as const },
+      },
     };
     const response = respond();
 
@@ -31,7 +35,11 @@ describe('HealthController', () => {
     const body = {
       status: 'error' as const,
       service: 'notifications-api',
-      components: { db: { status: 'up' as const }, kafka: { status: 'down' as const } },
+      components: {
+        db: { status: 'up' as const },
+        kafka: { status: 'down' as const },
+        smtp: { status: 'up' as const },
+      },
     };
     const response = respond();
 

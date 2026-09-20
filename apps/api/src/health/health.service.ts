@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JsonLogger, recordHealth } from '../observability';
 import { DatabaseService } from '../database/database.service';
+import { EmailSenderService } from '../email/email-sender.service';
 import { NotificationConsumerService } from '../kafka/notification-consumer.service';
 
 /** Matches `OTEL_SERVICE_NAME`, so health, metrics, traces and logs all name
@@ -17,6 +18,7 @@ export interface HealthBody {
   components: {
     db: HealthComponent;
     kafka: HealthComponent;
+    smtp: HealthComponent;
   };
 }
 
@@ -25,11 +27,16 @@ export class HealthService {
   constructor(
     private readonly database: DatabaseService,
     private readonly kafka: NotificationConsumerService,
+    private readonly emailSender: EmailSenderService,
     private readonly logger: JsonLogger
   ) {}
 
   /** Kafka is required, not optional: this service consumes its topic, and a
-   *  consumer that has dropped out of its group stops working silently. */
+   *  consumer that has dropped out of its group stops working silently. The
+   *  relay is required for the same reason — a service that cannot send email
+   *  is not healthy, whatever else is working, and that was the difference
+   *  between a revoked login and a week of silently dead-lettered contact
+   *  messages. */
   async check(): Promise<HealthBody> {
     let databaseHealthy = true;
     try {
@@ -41,10 +48,13 @@ export class HealthService {
       }
     }
     const kafkaHealthy = this.kafka.isReady();
-    const status = databaseHealthy && kafkaHealthy ? ('ok' as const) : ('error' as const);
+    const smtpHealthy = this.emailSender.isAvailable();
+    const status =
+      databaseHealthy && kafkaHealthy && smtpHealthy ? ('ok' as const) : ('error' as const);
     const components = {
       db: { status: databaseHealthy ? ('up' as const) : ('down' as const) },
       kafka: { status: kafkaHealthy ? ('up' as const) : ('down' as const) },
+      smtp: { status: smtpHealthy ? ('up' as const) : ('down' as const) },
     };
 
     // The same judgement the response carries, as a metric, so a rule can read

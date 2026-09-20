@@ -11,6 +11,7 @@ export class NotificationMetricsService {
   private readonly deadLetterCounter: Counter<'source_app' | 'template_id'>;
   private readonly renderDurationHistogram: Histogram<'template_id'>;
   private readonly sendDurationHistogram: Histogram<'provider' | 'template_id'>;
+  private readonly deliveryDurationHistogram: Histogram<'source_app' | 'template_id'>;
 
   /**
    * The registry comes from `ObservabilityModule`, so these metrics and the
@@ -65,6 +66,13 @@ export class NotificationMetricsService {
       labelNames: ['provider', 'template_id'],
       registers: [this.registry],
     });
+    this.deliveryDurationHistogram = new Histogram({
+      name: 'notification_delivery_duration_seconds',
+      help: 'Time from the producer asking for a notification to it being sent.',
+      labelNames: ['source_app', 'template_id'],
+      buckets: [0.5, 1, 2, 5, 10, 30, 60, 120, 300],
+      registers: [this.registry],
+    });
   }
 
   received(sourceApp: string, templateId: string): void {
@@ -108,5 +116,23 @@ export class NotificationMetricsService {
 
   sendDuration(provider: string, templateId: string, durationMs: number): void {
     this.sendDurationHistogram.observe({ provider, template_id: templateId }, durationMs / 1000);
+  }
+
+  /**
+   * How long a notification took from being asked for to being sent, which is
+   * the only number a person outside this service cares about. A clock skewed
+   * the wrong way would otherwise record a negative delivery.
+   */
+  deliveryDuration(sourceApp: string, templateId: string, requestedAt: string): void {
+    const requested = Date.parse(requestedAt);
+    if (Number.isNaN(requested)) return;
+
+    const seconds = (Date.now() - requested) / 1000;
+    if (seconds < 0) return;
+
+    this.deliveryDurationHistogram.observe(
+      { source_app: sourceApp, template_id: templateId },
+      seconds
+    );
   }
 }
