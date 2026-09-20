@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.17](https://github.com/zigordev/notifications/compare/v0.1.16...v0.1.17) (2026-09-20)
+
+
+### Bug Fixes
+
+* **lifecycle:** stop cleanly on SIGTERM and start without warnings ([#121](https://github.com/zigordev/notifications/issues/121)) ([a3cc981](https://github.com/zigordev/notifications/commit/a3cc981e9c6dc7653649e96907e7939f309e1852))
+
 ## [0.1.16](https://github.com/zigordev/notifications/compare/v0.1.15...v0.1.16) (2026-09-12)
 
 
