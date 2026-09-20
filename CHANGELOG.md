@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.18](https://github.com/zigordev/notifications/compare/v0.1.17...v0.1.18) (2026-09-20)
+
+
+### Features
+
+* **observability:** trace each email from its producer to SMTP ([#124](https://github.com/zigordev/notifications/issues/124)) ([cc316cc](https://github.com/zigordev/notifications/commit/cc316cca8c0c7e5405f50d659a99fac8dff7104f))
+
 ## [0.1.17](https://github.com/zigordev/notifications/compare/v0.1.16...v0.1.17) (2026-09-20)
 
 
