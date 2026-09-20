@@ -36,7 +36,9 @@ export class HealthService {
       await this.database.ping();
     } catch {
       databaseHealthy = false;
-      this.logger.warn('PostgreSQL readiness check failed', HealthService.name);
+      if (!this.database.isClosing()) {
+        this.logger.warn('PostgreSQL readiness check failed', HealthService.name);
+      }
     }
     const kafkaHealthy = this.kafka.isReady();
     const status = databaseHealthy && kafkaHealthy ? ('ok' as const) : ('error' as const);

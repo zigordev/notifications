@@ -65,4 +65,8 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   async ping(): Promise<void> {
     await this.pool.query('SELECT 1');
   }
+
+  isClosing(): boolean {
+    return this.pool.ending;
+  }
 }
