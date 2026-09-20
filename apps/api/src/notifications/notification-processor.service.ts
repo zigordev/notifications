@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { trace } from '@opentelemetry/api';
+import { Attributes, trace } from '@opentelemetry/api';
 import { randomUUID } from 'node:crypto';
 import {
   errorMessage,
@@ -7,6 +7,12 @@ import {
   NotificationProcessingBusyError,
 } from '../common/errors';
 import { JsonLogger } from '../observability';
+import {
+  notificationAttributes,
+  recordSpanError,
+  sendSpanAttributes,
+  tracer,
+} from '../observability/spans';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
 import { EmailSenderService } from '../email/email-sender.service';
 import { NotificationMetricsService } from '../metrics/notification-metrics.service';
@@ -27,6 +33,19 @@ export class NotificationProcessorService {
     private readonly logger: JsonLogger
   ) {}
 
+  private withSpan<T>(name: string, attributes: Attributes, run: () => Promise<T>): Promise<T> {
+    return tracer().startActiveSpan(name, { attributes }, async (span) => {
+      try {
+        return await run();
+      } catch (error) {
+        recordSpanError(span, error);
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
+  }
+
   async process(
     rawPayload: string,
     topic: string,
@@ -37,13 +56,15 @@ export class NotificationProcessorService {
     this.ensureEmailChannel(event);
 
     const processingOwner = randomUUID();
-    const claim = await this.repository.claim(
-      event,
-      topic,
-      rawPayload,
-      currentTraceId(),
-      processingOwner,
-      this.config.kafka.processingLeaseMs
+    const claim = await this.withSpan('notification.claim', notificationAttributes(event), () =>
+      this.repository.claim(
+        event,
+        topic,
+        rawPayload,
+        currentTraceId(),
+        processingOwner,
+        this.config.kafka.processingLeaseMs
+      )
     );
     if (claim.kind === 'terminal') {
       this.metrics.duplicate(event.sourceApp, event.templateId);
@@ -84,11 +105,17 @@ export class NotificationProcessorService {
     let sendStartedAt: number | null = null;
     try {
       const renderStartedAt = Date.now();
-      const renderedEmail = await this.templates.render(event.templateId, event.data);
+      const renderedEmail = await this.withSpan(
+        'notification.render',
+        notificationAttributes(event),
+        () => this.templates.render(event.templateId, event.data)
+      );
       this.metrics.renderDuration(event.templateId, Date.now() - renderStartedAt);
 
       sendStartedAt = Date.now();
-      await this.emailSender.send(event.recipient.email, event.replyTo, renderedEmail);
+      await this.withSpan('smtp.send', sendSpanAttributes(event, this.config.smtp.provider), () =>
+        this.emailSender.send(event.recipient.email, event.replyTo, renderedEmail)
+      );
       const durationMs = Date.now() - sendStartedAt;
       await this.repository.recordAttempt(
         claim.requestId,
