@@ -156,12 +156,13 @@ describe('NotificationConsumerService lifecycle', () => {
 
     expect(consumer.isReady()).toBe(false);
     expect(kill).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: 'kafka_consumer_crashed',
+        event: 'kafka.consumer_crashed',
+        errorClass: 'Error',
         restart: true,
       }),
-      expect.any(String),
       NotificationConsumerService.name
     );
   });

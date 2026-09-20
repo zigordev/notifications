@@ -15,6 +15,15 @@ export class NotificationProcessingBusyError extends Error {
   }
 }
 
+export function errorClass(error: unknown): string {
+  return error instanceof Error ? error.name : 'UnknownError';
+}
+
+export function errorReason(error: unknown): string {
+  const [first = ''] = errorMessage(error).split('\n');
+  return first.trim().slice(0, 200);
+}
+
 export function errorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;

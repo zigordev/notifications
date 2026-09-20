@@ -2,7 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Attributes, trace } from '@opentelemetry/api';
 import { randomUUID } from 'node:crypto';
 import {
+  errorClass,
   errorMessage,
+  errorReason,
   NonRetryableNotificationError,
   NotificationProcessingBusyError,
 } from '../common/errors';
@@ -11,6 +13,7 @@ import {
   notificationAttributes,
   recordSpanError,
   sendSpanAttributes,
+  smtpReplyCode,
   tracer,
 } from '../observability/spans';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
@@ -70,7 +73,7 @@ export class NotificationProcessorService {
       this.metrics.duplicate(event.sourceApp, event.templateId);
       this.logger.log(
         {
-          event: 'notification_duplicate',
+          event: 'notification.duplicate',
           idempotencyKey: event.idempotencyKey,
           requestId: claim.requestId,
           topic,
@@ -82,9 +85,9 @@ export class NotificationProcessorService {
       return 'duplicate';
     }
     if (claim.kind === 'busy') {
-      this.logger.log(
+      this.logger.debug(
         {
-          event: 'notification_already_processing',
+          event: 'notification.already_processing',
           idempotencyKey: event.idempotencyKey,
           requestId: claim.requestId,
           retryAfterMs: claim.retryAfterMs,
@@ -129,10 +132,11 @@ export class NotificationProcessorService {
       this.metrics.sent(event.sourceApp, event.templateId);
       this.logger.log(
         {
-          event: 'notification_sent',
+          event: 'notification.sent',
           requestId: claim.requestId,
           templateId: event.templateId,
-          recipient: maskEmail(event.recipient.email),
+          sourceApp: event.sourceApp,
+          durationMs,
           topic,
           partition,
           offset,
@@ -173,21 +177,33 @@ export class NotificationProcessorService {
         this.metrics.sendDuration(this.config.smtp.provider, event.templateId, durationMs);
       }
       this.metrics.failed(event.sourceApp, event.templateId);
-      this.logger.error(
-        {
-          event: 'notification_processing_failed',
-          phase: sendStartedAt === null ? 'render' : 'send',
-          requestId: claim.requestId,
-          templateId: event.templateId,
-          recipient: maskEmail(event.recipient.email),
-          topic,
-          partition,
-          offset,
-          error: message,
-        },
-        error instanceof Error ? error.stack : undefined,
-        NotificationProcessorService.name
-      );
+
+      const fields = {
+        event: 'notification.failed',
+        phase: sendStartedAt === null ? 'render' : 'send',
+        requestId: claim.requestId,
+        templateId: event.templateId,
+        sourceApp: event.sourceApp,
+        topic,
+        partition,
+        offset,
+        errorClass: errorClass(error),
+        error: errorReason(error),
+        ...(smtpReplyCode(error) === undefined ? {} : { smtpReplyCode: smtpReplyCode(error) }),
+      };
+
+      // A failure that will be retried is not the outage; the line that says
+      // the email was given up on is. Only a non-retryable one ends here.
+      if (error instanceof NonRetryableNotificationError) {
+        this.logger.error(
+          fields,
+          error instanceof Error ? error.stack : undefined,
+          NotificationProcessorService.name
+        );
+      } else {
+        this.logger.warn(fields, NotificationProcessorService.name);
+      }
+
       throw error;
     }
   }
@@ -214,7 +230,7 @@ export class NotificationProcessorService {
       });
       this.logger.error(
         {
-          event: 'notification_dlt_payload_invalid',
+          event: 'notification.dlt_payload_invalid',
           topic,
           partition,
           offset,
@@ -242,7 +258,7 @@ export class NotificationProcessorService {
     this.metrics.deadLettered(event.sourceApp, event.templateId);
     this.logger.error(
       {
-        event: 'notification_dead_lettered',
+        event: 'notification.dead_lettered',
         requestId: state?.requestId ?? event.messageId,
         templateId: event.templateId,
         topic,
@@ -263,12 +279,4 @@ export class NotificationProcessorService {
 
 function currentTraceId(): string {
   return trace.getActiveSpan()?.spanContext().traceId ?? '';
-}
-
-function maskEmail(email: string): string {
-  const separator = email.indexOf('@');
-  if (separator <= 1) {
-    return '***';
-  }
-  return `${email[0]}***${email.slice(separator)}`;
 }

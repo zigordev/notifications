@@ -11,7 +11,7 @@ import {
 } from 'kafkajs';
 import SnappyCodec from 'kafkajs-snappy';
 import { context as otelContext, propagation, SpanKind } from '@opentelemetry/api';
-import { errorMessage } from '../common/errors';
+import { errorClass, errorMessage, errorReason } from '../common/errors';
 import { JsonLogger, kafkaLogCreator } from '../observability';
 import {
   consumeSpanAttributes,
@@ -66,15 +66,21 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
     });
     this.consumer.on(this.consumer.events.CRASH, ({ payload }) => {
       this.ready = false;
-      this.logger.error(
-        {
-          event: 'kafka_consumer_crashed',
-          error: errorMessage(payload.error),
-          restart: payload.restart,
-        },
-        payload.error.stack,
-        NotificationConsumerService.name
-      );
+      const crash = {
+        event: 'kafka.consumer_crashed',
+        errorClass: errorClass(payload.error),
+        error: errorReason(payload.error),
+        restart: payload.restart,
+      };
+
+      // kafkajs rejoins the group on its own when it says it will restart.
+      // Paging on that would page on every rebalance; only a crash it cannot
+      // come back from is an error.
+      if (payload.restart) {
+        this.logger.warn(crash, NotificationConsumerService.name);
+      } else {
+        this.logger.error(crash, payload.error.stack, NotificationConsumerService.name);
+      }
       if (!payload.restart) {
         terminateAfterConsumerCrash();
       }
@@ -96,7 +102,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
     });
     this.logger.log(
       {
-        event: 'kafka_consumer_started',
+        event: 'kafka.consumer_started',
         topics: [this.config.kafka.emailTopic, this.config.kafka.emailDltTopic],
         consumerGroupId: this.config.kafka.consumerGroupId,
       },
@@ -181,14 +187,15 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
           async (context) => {
             this.logger.warn(
               {
-                event: 'notification_retry_scheduled',
+                event: 'notification.retry_scheduled',
                 topic: batch.topic,
                 partition: batch.partition,
                 offset: message.offset,
                 attempt: context.attempt,
                 maxAttempts: context.maxAttempts,
                 delayMs: context.delayMs,
-                error: errorMessage(context.error),
+                errorClass: errorClass(context.error),
+                error: errorReason(context.error),
               },
               NotificationConsumerService.name
             );
@@ -227,16 +234,19 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         },
       ],
     });
-    this.logger.error(
+    // One error line per email that is given up on, and this is not it: the
+    // `notification.dead_lettered` line written when the DLT topic is consumed
+    // is. This one says where the message went.
+    this.logger.warn(
       {
-        event: 'notification_routed_to_dlt',
+        event: 'notification.routed_to_dlt',
         originalTopic,
         dltTopic: this.config.kafka.emailDltTopic,
         partition,
         offset: message.offset,
-        error: errorMessage(error),
+        errorClass: errorClass(error),
+        error: errorReason(error),
       },
-      error instanceof Error ? error.stack : undefined,
       NotificationConsumerService.name
     );
   }
