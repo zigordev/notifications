@@ -45,7 +45,7 @@ process.stdin.on("end", () => {
 echo "[integration] Starting PostgreSQL, Redpanda, two API consumers, and Mailpit"
 "${compose[@]}" up -d --build
 
-wait_for_url "http://localhost:18080/health" "notifications health"
+wait_for_url "http://localhost:18090/health" "notifications health"
 for _ in $(seq 1 60); do
   if "${compose[@]}" exec -T api-peer \
     curl -fsS http://127.0.0.1:8080/health >/dev/null; then
@@ -56,7 +56,7 @@ done
 "${compose[@]}" exec -T api-peer \
   curl -fsS http://127.0.0.1:8080/health >/dev/null
 
-metrics="$(curl -fsS http://localhost:18080/metrics)"
+metrics="$(curl -fsS http://localhost:18090/metrics)"
 grep -q 'process_resident_memory_bytes' <<<"$metrics"
 grep -q 'notifications_received_total' <<<"$metrics"
 
