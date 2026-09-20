@@ -10,8 +10,15 @@ import {
   Producer,
 } from 'kafkajs';
 import SnappyCodec from 'kafkajs-snappy';
+import { context as otelContext, propagation, SpanKind } from '@opentelemetry/api';
 import { errorMessage } from '../common/errors';
 import { JsonLogger, kafkaLogCreator } from '../observability';
+import {
+  consumeSpanAttributes,
+  kafkaTextHeaders,
+  recordSpanError,
+  tracer,
+} from '../observability/spans';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
 import { NotificationProcessorService } from '../notifications/notification-processor.service';
 import { RetryExecutor } from './retry-executor';
@@ -114,41 +121,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         return;
       }
 
-      const payload = message.value?.toString('utf8') ?? '';
-      if (batch.topic === this.config.kafka.emailDltTopic) {
-        await this.processor.processDeadLetter(
-          payload,
-          batch.topic,
-          batch.partition,
-          message.offset,
-          headerValue(message, 'kafka_dlt-exception-message') ?? 'Message routed to DLT'
-        );
-      } else {
-        try {
-          await this.retryExecutor.execute(
-            () => this.processor.process(payload, batch.topic, batch.partition, message.offset),
-            async (context) => {
-              this.logger.warn(
-                {
-                  event: 'notification_retry_scheduled',
-                  topic: batch.topic,
-                  partition: batch.partition,
-                  offset: message.offset,
-                  attempt: context.attempt,
-                  maxAttempts: context.maxAttempts,
-                  delayMs: context.delayMs,
-                  error: errorMessage(context.error),
-                },
-                NotificationConsumerService.name
-              );
-              await batchPayload.heartbeat();
-            },
-            async (durationMs) => this.waitWithHeartbeat(durationMs, () => batchPayload.heartbeat())
-          );
-        } catch (error) {
-          await this.publishDeadLetter(batch.topic, batch.partition, message, error);
-        }
-      }
+      await this.traceMessage(batchPayload, message);
 
       batchPayload.resolveOffset(message.offset);
       await this.consumer.commitOffsets([
@@ -159,6 +132,73 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         },
       ]);
       await batchPayload.heartbeat();
+    }
+  }
+
+  private traceMessage(batchPayload: EachBatchPayload, message: KafkaMessage): Promise<void> {
+    const { batch } = batchPayload;
+    const parent = propagation.extract(otelContext.active(), kafkaTextHeaders(message.headers));
+
+    return tracer().startActiveSpan(
+      'notification.process',
+      {
+        kind: SpanKind.CONSUMER,
+        attributes: consumeSpanAttributes(batch.topic, batch.partition, message.offset),
+      },
+      parent,
+      async (span) => {
+        try {
+          await this.handleMessage(batchPayload, message);
+        } catch (error) {
+          recordSpanError(span, error);
+          throw error;
+        } finally {
+          span.end();
+        }
+      }
+    );
+  }
+
+  private async handleMessage(
+    batchPayload: EachBatchPayload,
+    message: KafkaMessage
+  ): Promise<void> {
+    const { batch } = batchPayload;
+    const payload = message.value?.toString('utf8') ?? '';
+
+    if (batch.topic === this.config.kafka.emailDltTopic) {
+      await this.processor.processDeadLetter(
+        payload,
+        batch.topic,
+        batch.partition,
+        message.offset,
+        headerValue(message, 'kafka_dlt-exception-message') ?? 'Message routed to DLT'
+      );
+    } else {
+      try {
+        await this.retryExecutor.execute(
+          () => this.processor.process(payload, batch.topic, batch.partition, message.offset),
+          async (context) => {
+            this.logger.warn(
+              {
+                event: 'notification_retry_scheduled',
+                topic: batch.topic,
+                partition: batch.partition,
+                offset: message.offset,
+                attempt: context.attempt,
+                maxAttempts: context.maxAttempts,
+                delayMs: context.delayMs,
+                error: errorMessage(context.error),
+              },
+              NotificationConsumerService.name
+            );
+            await batchPayload.heartbeat();
+          },
+          async (durationMs) => this.waitWithHeartbeat(durationMs, () => batchPayload.heartbeat())
+        );
+      } catch (error) {
+        await this.publishDeadLetter(batch.topic, batch.partition, message, error);
+      }
     }
   }
 
