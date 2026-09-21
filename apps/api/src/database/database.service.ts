@@ -1,6 +1,7 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { join } from 'node:path';
 import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
+import { errorClass, errorReason } from '../common/errors';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
 import { JsonLogger } from '../observability';
 import { runMigrations } from './migration-runner';
@@ -24,10 +25,16 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       idleTimeoutMillis: 30_000,
       max: 10,
     });
+    // An idle client dropped by a restarting database is not an outage: the
+    // pool opens another one on the next query, and the query that matters
+    // reports its own failure.
     this.pool.on('error', (error) => {
-      this.logger.error(
-        `Unexpected idle PostgreSQL client error: ${error.message}`,
-        error.stack,
+      this.logger.warn(
+        {
+          event: 'postgres.idle_client_error',
+          errorClass: errorClass(error),
+          error: errorReason(error),
+        },
         DatabaseService.name
       );
     });

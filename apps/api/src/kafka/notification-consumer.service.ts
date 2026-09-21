@@ -11,7 +11,7 @@ import {
 } from 'kafkajs';
 import SnappyCodec from 'kafkajs-snappy';
 import { context as otelContext, propagation, SpanKind } from '@opentelemetry/api';
-import { errorMessage } from '../common/errors';
+import { errorClass, errorMessage, errorReason } from '../common/errors';
 import { JsonLogger, kafkaLogCreator } from '../observability';
 import {
   consumeSpanAttributes,
@@ -20,6 +20,7 @@ import {
   tracer,
 } from '../observability/spans';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
+import { EmailSenderService } from '../email/email-sender.service';
 import { NotificationProcessorService } from '../notifications/notification-processor.service';
 import { RetryExecutor } from './retry-executor';
 
@@ -35,6 +36,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     private readonly processor: NotificationProcessorService,
     private readonly retryExecutor: RetryExecutor,
+    private readonly emailSender: EmailSenderService,
     private readonly logger: JsonLogger
   ) {
     const kafka = new Kafka({
@@ -66,15 +68,21 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
     });
     this.consumer.on(this.consumer.events.CRASH, ({ payload }) => {
       this.ready = false;
-      this.logger.error(
-        {
-          event: 'kafka_consumer_crashed',
-          error: errorMessage(payload.error),
-          restart: payload.restart,
-        },
-        payload.error.stack,
-        NotificationConsumerService.name
-      );
+      const crash = {
+        event: 'kafka.consumer_crashed',
+        errorClass: errorClass(payload.error),
+        error: errorReason(payload.error),
+        restart: payload.restart,
+      };
+
+      // kafkajs rejoins the group on its own when it says it will restart.
+      // Paging on that would page on every rebalance; only a crash it cannot
+      // come back from is an error.
+      if (payload.restart) {
+        this.logger.warn(crash, NotificationConsumerService.name);
+      } else {
+        this.logger.error(crash, payload.error.stack, NotificationConsumerService.name);
+      }
       if (!payload.restart) {
         terminateAfterConsumerCrash();
       }
@@ -96,7 +104,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
     });
     this.logger.log(
       {
-        event: 'kafka_consumer_started',
+        event: 'kafka.consumer_started',
         topics: [this.config.kafka.emailTopic, this.config.kafka.emailDltTopic],
         consumerGroupId: this.config.kafka.consumerGroupId,
       },
@@ -121,7 +129,12 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         return;
       }
 
-      await this.traceMessage(batchPayload, message);
+      const handled = await this.traceMessage(batchPayload, message);
+
+      // The relay is down and the message is still in the topic. Leaving the
+      // offset where it is redelivers it when the pause lifts, which is the
+      // difference between an outage and a morning of dead-lettered email.
+      if (!handled) return;
 
       batchPayload.resolveOffset(message.offset);
       await this.consumer.commitOffsets([
@@ -135,7 +148,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
     }
   }
 
-  private traceMessage(batchPayload: EachBatchPayload, message: KafkaMessage): Promise<void> {
+  private traceMessage(batchPayload: EachBatchPayload, message: KafkaMessage): Promise<boolean> {
     const { batch } = batchPayload;
     const parent = propagation.extract(otelContext.active(), kafkaTextHeaders(message.headers));
 
@@ -148,7 +161,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
       parent,
       async (span) => {
         try {
-          await this.handleMessage(batchPayload, message);
+          return await this.handleMessage(batchPayload, message);
         } catch (error) {
           recordSpanError(span, error);
           throw error;
@@ -162,7 +175,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
   private async handleMessage(
     batchPayload: EachBatchPayload,
     message: KafkaMessage
-  ): Promise<void> {
+  ): Promise<boolean> {
     const { batch } = batchPayload;
     const payload = message.value?.toString('utf8') ?? '';
 
@@ -181,14 +194,15 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
           async (context) => {
             this.logger.warn(
               {
-                event: 'notification_retry_scheduled',
+                event: 'notification.retry_scheduled',
                 topic: batch.topic,
                 partition: batch.partition,
                 offset: message.offset,
                 attempt: context.attempt,
                 maxAttempts: context.maxAttempts,
                 delayMs: context.delayMs,
-                error: errorMessage(context.error),
+                errorClass: errorClass(context.error),
+                error: errorReason(context.error),
               },
               NotificationConsumerService.name
             );
@@ -197,9 +211,47 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
           async (durationMs) => this.waitWithHeartbeat(durationMs, () => batchPayload.heartbeat())
         );
       } catch (error) {
+        if (!this.emailSender.isAvailable()) {
+          this.pauseForRelayOutage(batch.topic, batch.partition, message.offset, error);
+          return false;
+        }
+
         await this.publishDeadLetter(batch.topic, batch.partition, message, error);
       }
     }
+
+    return true;
+  }
+
+  /**
+   * Stop consuming while the relay is unusable. kafkajs redelivers from the
+   * last committed offset when the pause lifts, so nothing is lost and nothing
+   * is dead-lettered for a failure that has nothing to do with the message.
+   */
+  private pauseForRelayOutage(
+    topic: string,
+    partition: number,
+    offset: string,
+    error: unknown
+  ): void {
+    const backoffMs = this.config.smtp.outageBackoffMs;
+
+    this.consumer.pause([{ topic }]);
+    const resume = setTimeout(() => this.consumer.resume([{ topic }]), backoffMs);
+    resume.unref?.();
+
+    this.logger.warn(
+      {
+        event: 'notification.paused_for_relay',
+        topic,
+        partition,
+        offset,
+        backoffMs,
+        errorClass: errorClass(error),
+        error: errorReason(error),
+      },
+      NotificationConsumerService.name
+    );
   }
 
   private async publishDeadLetter(
@@ -227,16 +279,19 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         },
       ],
     });
-    this.logger.error(
+    // One error line per email that is given up on, and this is not it: the
+    // `notification.dead_lettered` line written when the DLT topic is consumed
+    // is. This one says where the message went.
+    this.logger.warn(
       {
-        event: 'notification_routed_to_dlt',
+        event: 'notification.routed_to_dlt',
         originalTopic,
         dltTopic: this.config.kafka.emailDltTopic,
         partition,
         offset: message.offset,
-        error: errorMessage(error),
+        errorClass: errorClass(error),
+        error: errorReason(error),
       },
-      error instanceof Error ? error.stack : undefined,
       NotificationConsumerService.name
     );
   }
