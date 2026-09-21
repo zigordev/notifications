@@ -25,9 +25,6 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       idleTimeoutMillis: 30_000,
       max: 10,
     });
-    // An idle client dropped by a restarting database is not an outage: the
-    // pool opens another one on the next query, and the query that matters
-    // reports its own failure.
     this.pool.on('error', (error) => {
       this.logger.warn(
         {

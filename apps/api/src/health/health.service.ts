@@ -32,11 +32,7 @@ export class HealthService {
   ) {}
 
   /** Kafka is required, not optional: this service consumes its topic, and a
-   *  consumer that has dropped out of its group stops working silently. The
-   *  relay is required for the same reason — a service that cannot send email
-   *  is not healthy, whatever else is working, and that was the difference
-   *  between a revoked login and a week of silently dead-lettered contact
-   *  messages. */
+   *  consumer that has dropped out of its group stops working silently. */
   async check(): Promise<HealthBody> {
     let databaseHealthy = true;
     try {

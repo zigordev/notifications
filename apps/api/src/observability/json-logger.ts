@@ -67,8 +67,6 @@ export function writeLogRecord(
   if (version) record.release = version;
 
   if (isFieldBag(message)) {
-    // Fields belong at the top level, where LogQL reads them as `event` rather
-    // than `message_event`: Loki flattens a nested object by prefixing it.
     Object.assign(record, message);
     if (record.error instanceof Error) record.error = errorFields(record.error, false);
   } else if (message instanceof Error) {
@@ -122,9 +120,6 @@ export function kafkaLogCreator(): (
   return () =>
     ({ level, log, namespace }) => {
       const { message, timestamp, logger, stack, ...rest } = log;
-      // A crash kafkajs is about to recover from is not an outage. It logs the
-      // crash at ERROR with `restarting: true`, then rejoins the group on its
-      // own; paging on it would page on every rebalance.
       const mapped = level === 1 && rest.restarting === true ? 'warn' : (levels[level] ?? 'info');
 
       writeLogRecord(

@@ -326,11 +326,6 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
 
-      # This service has no public route, which is why the URL check below has
-      # never run. The health it reports is worth reading anyway: it now covers
-      # Postgres, the consumer group and the SMTP relay, so a deploy that comes
-      # back with a revoked login fails here instead of dead-lettering email
-      # quietly for a week.
       - name: Health check on the host
         env:
           AWS_REGION: ${{ vars.AWS_REGION }}
