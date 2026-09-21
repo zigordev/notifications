@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.21](https://github.com/zigordev/notifications/compare/v0.1.20...v0.1.21) (2026-09-21)
+
+
+### Bug Fixes
+
+* **observability:** send traces to the collector's real path ([#132](https://github.com/zigordev/notifications/issues/132)) ([ff9b3c8](https://github.com/zigordev/notifications/commit/ff9b3c8ea84b3ab388a9189a0b573343bfeaf9fc))
+
 ## [0.1.20](https://github.com/zigordev/notifications/compare/v0.1.19...v0.1.20) (2026-09-21)
 
 
