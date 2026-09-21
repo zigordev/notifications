@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.22](https://github.com/zigordev/notifications/compare/v0.1.21...v0.1.22) (2026-09-21)
+
+
+### Features
+
+* **observability:** export the release as service_build_info ([#133](https://github.com/zigordev/notifications/issues/133)) ([e541494](https://github.com/zigordev/notifications/commit/e54149416437e7920434440d25677c95dc1833f2))
+
 ## [0.1.21](https://github.com/zigordev/notifications/compare/v0.1.20...v0.1.21) (2026-09-21)
 
 
