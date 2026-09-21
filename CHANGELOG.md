@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.20](https://github.com/zigordev/notifications/compare/v0.1.19...v0.1.20) (2026-09-21)
+
+
+### Bug Fixes
+
+* **observability:** name a trace only when it was sampled ([#130](https://github.com/zigordev/notifications/issues/130)) ([2f4bd7a](https://github.com/zigordev/notifications/commit/2f4bd7a82bf9be0c6fbd960d109e5932bf759932))
+
 ## [0.1.19](https://github.com/zigordev/notifications/compare/v0.1.18...v0.1.19) (2026-09-21)
 
 
