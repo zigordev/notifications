@@ -75,9 +75,6 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         restart: payload.restart,
       };
 
-      // kafkajs rejoins the group on its own when it says it will restart.
-      // Paging on that would page on every rebalance; only a crash it cannot
-      // come back from is an error.
       if (payload.restart) {
         this.logger.warn(crash, NotificationConsumerService.name);
       } else {
@@ -131,9 +128,6 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
 
       const handled = await this.traceMessage(batchPayload, message);
 
-      // The relay is down and the message is still in the topic. Leaving the
-      // offset where it is redelivers it when the pause lifts, which is the
-      // difference between an outage and a morning of dead-lettered email.
       if (!handled) return;
 
       batchPayload.resolveOffset(message.offset);
@@ -223,11 +217,6 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
     return true;
   }
 
-  /**
-   * Stop consuming while the relay is unusable. kafkajs redelivers from the
-   * last committed offset when the pause lifts, so nothing is lost and nothing
-   * is dead-lettered for a failure that has nothing to do with the message.
-   */
   private pauseForRelayOutage(
     topic: string,
     partition: number,
@@ -279,9 +268,6 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         },
       ],
     });
-    // One error line per email that is given up on, and this is not it: the
-    // `notification.dead_lettered` line written when the DLT topic is consumed
-    // is. This one says where the message went.
     this.logger.warn(
       {
         event: 'notification.routed_to_dlt',

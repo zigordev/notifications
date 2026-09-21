@@ -54,11 +54,6 @@ export class EmailSenderService implements OnModuleInit, OnModuleDestroy {
     return this.available;
   }
 
-  /**
-   * One authenticated round trip to the relay. A login that Gmail has revoked
-   * answers 535 here, which is the difference between "nothing is being sent"
-   * and knowing why before the first email is lost.
-   */
   async verify(): Promise<boolean> {
     if (!this.transport.verify) return this.available;
 
@@ -124,16 +119,9 @@ export class EmailSenderService implements OnModuleInit, OnModuleDestroy {
 
 const RELAY_REPLY_CODES = new Set([421, 450, 451, 452, 454, 530, 534, 535]);
 
-/**
- * A rejection that says the relay itself is unusable, rather than this one
- * message being wrong. A 5xx reply about the message is not an outage; a
- * refused connection, a timeout or a rejected login is.
- */
 export function isRelayFailure(error: unknown): boolean {
   const code = smtpReplyCode(error);
 
-  // A rejection with no SMTP reply at all never reached the relay: a refused
-  // connection, a DNS failure, a timeout.
   if (code === undefined) return true;
 
   return RELAY_REPLY_CODES.has(code);

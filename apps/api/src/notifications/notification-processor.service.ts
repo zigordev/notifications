@@ -193,8 +193,6 @@ export class NotificationProcessorService {
         ...(smtpReplyCode(error) === undefined ? {} : { smtpReplyCode: smtpReplyCode(error) }),
       };
 
-      // A failure that will be retried is not the outage; the line that says
-      // the email was given up on is. Only a non-retryable one ends here.
       if (error instanceof NonRetryableNotificationError) {
         this.logger.error(
           fields,

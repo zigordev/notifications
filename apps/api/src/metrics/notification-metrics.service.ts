@@ -118,11 +118,6 @@ export class NotificationMetricsService {
     this.sendDurationHistogram.observe({ provider, template_id: templateId }, durationMs / 1000);
   }
 
-  /**
-   * How long a notification took from being asked for to being sent, which is
-   * the only number a person outside this service cares about. A clock skewed
-   * the wrong way would otherwise record a negative delivery.
-   */
   deliveryDuration(sourceApp: string, templateId: string, requestedAt: string): void {
     const requested = Date.parse(requestedAt);
     if (Number.isNaN(requested)) return;
