@@ -16,6 +16,8 @@ vi.mock('kafkajs', () => {
     run: vi.fn(),
     disconnect: vi.fn(),
     commitOffsets: vi.fn(),
+    pause: vi.fn(),
+    resume: vi.fn(),
   };
   const producer = {
     connect: vi.fn(),
@@ -38,6 +40,7 @@ vi.mock('kafkajs', () => {
 
 import { AppConfig } from '../config/app-config';
 import { JsonLogger } from '../observability';
+import { EmailSenderService } from '../email/email-sender.service';
 import { NotificationProcessorService } from '../notifications/notification-processor.service';
 import { EachBatchPayload } from 'kafkajs';
 import { RetryExecutor } from './retry-executor';
@@ -47,6 +50,11 @@ interface KafkaMockState {
   compressionCodecs: Record<number, unknown>;
   consumer: {
     commitOffsets: Mock;
+    pause: Mock;
+    resume: Mock;
+  };
+  producer: {
+    send: Mock;
   };
   handlers: Map<string, (event: unknown) => void>;
 }
@@ -60,6 +68,7 @@ describe('NotificationConsumerService lifecycle', () => {
       emailTopic: 'notification.email.requested.v1',
       emailDltTopic: 'notification.email.requested.v1.DLT',
     },
+    smtp: { outageBackoffMs: 30_000 },
   } as AppConfig;
   // Vitest has no `requireMock`: once `vi.mock` has replaced the module, a
   // plain import *is* the mock. It has to be awaited inside the suite because
@@ -76,6 +85,48 @@ describe('NotificationConsumerService lifecycle', () => {
     expect(kafka.compressionCodecs[2]).toEqual(expect.any(Function));
   });
 
+  it('pauses instead of dead-lettering while the relay is unusable', async () => {
+    const processor = {
+      process: vi.fn().mockRejectedValue(new Error('Invalid login: 535-5.7.8')),
+    };
+    const retryExecutor = {
+      execute: vi.fn(async (operation: () => Promise<unknown>) => operation()),
+    };
+    const relay = { isAvailable: vi.fn().mockReturnValue(false) };
+    const resolveOffset = vi.fn();
+    const service = new NotificationConsumerService(
+      config,
+      processor as unknown as NotificationProcessorService,
+      retryExecutor as unknown as RetryExecutor,
+      relay as unknown as EmailSenderService,
+      logger as unknown as JsonLogger
+    );
+    const payload = {
+      batch: {
+        topic: config.kafka.emailTopic,
+        partition: 2,
+        messages: [{ offset: '41', value: Buffer.from('{}') }],
+      },
+      isRunning: () => true,
+      isStale: () => false,
+      resolveOffset,
+      heartbeat: vi.fn().mockResolvedValue(undefined),
+    } as unknown as EachBatchPayload;
+
+    await (
+      service as unknown as { processBatch: (batch: EachBatchPayload) => Promise<void> }
+    ).processBatch(payload);
+
+    expect(kafka.consumer.pause).toHaveBeenCalledWith([{ topic: config.kafka.emailTopic }]);
+    expect(kafka.producer.send).not.toHaveBeenCalled();
+    expect(resolveOffset).not.toHaveBeenCalled();
+    expect(kafka.consumer.commitOffsets).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'notification.paused_for_relay', offset: '41' }),
+      expect.any(String)
+    );
+  });
+
   it('resolves each processed batch offset before committing its successor', async () => {
     const processor = {
       process: vi.fn().mockResolvedValue('sent'),
@@ -83,6 +134,7 @@ describe('NotificationConsumerService lifecycle', () => {
     const retryExecutor = {
       execute: vi.fn(async (operation: () => Promise<unknown>) => operation()),
     };
+    const relay = { isAvailable: vi.fn().mockReturnValue(true) };
     const offset = '7';
     const resolveOffset = vi.fn();
     const heartbeat = vi.fn().mockResolvedValue(undefined);
@@ -90,6 +142,7 @@ describe('NotificationConsumerService lifecycle', () => {
       config,
       processor as unknown as NotificationProcessorService,
       retryExecutor as unknown as RetryExecutor,
+      relay as unknown as EmailSenderService,
       logger as unknown as JsonLogger
     );
     const payload = {
@@ -131,6 +184,7 @@ describe('NotificationConsumerService lifecycle', () => {
       config,
       {} as NotificationProcessorService,
       {} as RetryExecutor,
+      { isAvailable: () => true } as EmailSenderService,
       logger as unknown as JsonLogger
     );
   });
@@ -156,12 +210,13 @@ describe('NotificationConsumerService lifecycle', () => {
 
     expect(consumer.isReady()).toBe(false);
     expect(kill).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
-        event: 'kafka_consumer_crashed',
+        event: 'kafka.consumer_crashed',
+        errorClass: 'Error',
         restart: true,
       }),
-      expect.any(String),
       NotificationConsumerService.name
     );
   });

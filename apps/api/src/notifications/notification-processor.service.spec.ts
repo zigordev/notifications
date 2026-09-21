@@ -53,9 +53,10 @@ describe('NotificationProcessorService', () => {
       | 'deadLettered'
       | 'renderDuration'
       | 'sendDuration'
+      | 'deliveryDuration'
     >
   >;
-  let logger: Mocked<Pick<JsonLogger, 'log' | 'error'>>;
+  let logger: Mocked<Pick<JsonLogger, 'debug' | 'error' | 'log' | 'warn'>>;
   let processor: NotificationProcessorService;
 
   beforeEach(() => {
@@ -89,9 +90,12 @@ describe('NotificationProcessorService', () => {
       deadLettered: vi.fn(),
       renderDuration: vi.fn(),
       sendDuration: vi.fn(),
+      deliveryDuration: vi.fn(),
     };
     logger = {
       log: vi.fn(),
+      debug: vi.fn(),
+      warn: vi.fn(),
       error: vi.fn(),
     };
     processor = new NotificationProcessorService(
@@ -166,6 +170,69 @@ describe('NotificationProcessorService', () => {
       expect.any(Number)
     );
     expect(repository.markSent).toHaveBeenCalledWith('original-message', expect.any(String));
+  });
+
+  it('reports a failure that will be retried as a warning, never as the outage', async () => {
+    const rejection = Object.assign(
+      new Error('Invalid login: 535-5.7.8 Username and Password not accepted.\n535 5.7.8 more'),
+      { responseCode: 535 }
+    );
+    emailSender.send.mockRejectedValue(rejection);
+
+    await expect(
+      processor.process(payload, 'notification.email.requested.v1', 0, '20')
+    ).rejects.toThrow('Invalid login');
+
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'notification.failed',
+        phase: 'send',
+        errorClass: 'Error',
+        error: 'Invalid login: 535-5.7.8 Username and Password not accepted.',
+        smtpReplyCode: 535,
+      }),
+      expect.any(String)
+    );
+  });
+
+  it('reports a failure nothing can retry as an error', async () => {
+    templates.render.mockRejectedValue(new NonRetryableNotificationError('Unknown template'));
+
+    await expect(
+      processor.process(payload, 'notification.email.requested.v1', 0, '21')
+    ).rejects.toThrow('Unknown template');
+
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'notification.failed',
+        phase: 'render',
+        errorClass: 'NonRetryableNotificationError',
+      }),
+      expect.any(String),
+      expect.any(String)
+    );
+  });
+
+  it('never writes the recipient, masked or otherwise', async () => {
+    await processor.process(payload, 'notification.email.requested.v1', 0, '22');
+
+    emailSender.send.mockRejectedValue(new Error('SMTP unavailable'));
+    await expect(
+      processor.process(payload, 'notification.email.requested.v1', 0, '23')
+    ).rejects.toThrow('SMTP unavailable');
+
+    const written = JSON.stringify([
+      logger.log.mock.calls,
+      logger.debug.mock.calls,
+      logger.warn.mock.calls,
+      logger.error.mock.calls,
+    ]);
+
+    expect(written).toContain('notification.sent');
+    expect(written).not.toContain('user@example.com');
+    expect(written).not.toContain('u***@example.com');
+    expect(written).not.toContain('@example.com');
   });
 
   it('records failed delivery attempts before propagating the SMTP error', async () => {
