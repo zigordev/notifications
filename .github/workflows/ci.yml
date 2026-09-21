@@ -91,7 +91,7 @@ jobs:
           API_IMAGE: notifications-api:ci
           OPENBAO_TOKEN: ci-openbao-token
           TRUST_PROXY: 'false'
-          OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
+          OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
           KAFKA_BOOTSTRAP_SERVERS: platform-redpanda:9092
           NOTIFICATIONS_EMAIL_TOPIC: notification.email.requested.v1
           NOTIFICATIONS_EMAIL_DLT_TOPIC: notification.email.requested.v1.DLT

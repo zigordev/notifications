@@ -89,7 +89,7 @@ services:
       DB_PASSWORD: app
       DB_NAME: notifications
       TRUST_PROXY: 'false'
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       MANAGEMENT_TRACING_ENABLED: 'false'
       NOTIFICATIONS_PROCESSING_LEASE_MS: 3000
       KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
@@ -137,7 +137,7 @@ services:
       DB_PASSWORD: app
       DB_NAME: notifications
       TRUST_PROXY: 'false'
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318/v1/traces
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
       MANAGEMENT_TRACING_ENABLED: 'false'
       KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
       NOTIFICATIONS_EMAIL_TOPIC: notification.email.requested.v1
