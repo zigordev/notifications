@@ -53,6 +53,7 @@ services:
       DB_NAME: notifications
       TRUST_PROXY: ${TRUST_PROXY:?TRUST_PROXY is required}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:?OTEL_EXPORTER_OTLP_ENDPOINT is required}
+      APP_RELEASE: ${APP_RELEASE:-dev}
       OPENBAO_ADDR: http://openbao:8200
       OPENBAO_TOKEN: ${OPENBAO_TOKEN:?OPENBAO_TOKEN is required}
       OPENBAO_KV_MOUNT: kv
