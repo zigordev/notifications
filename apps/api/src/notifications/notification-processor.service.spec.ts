@@ -1,3 +1,4 @@
+import { trace } from '@opentelemetry/api';
 import { vi, type Mocked } from 'vitest';
 import { AppConfig } from '../config/app-config';
 import { EmailSenderService } from '../email/email-sender.service';
@@ -135,6 +136,50 @@ describe('NotificationProcessorService', () => {
     expect(repository.markSent).toHaveBeenCalledWith('message-1', expect.any(String));
     expect(metrics.received).toHaveBeenCalledWith('gpool', 'gpool.pool-invitation');
     expect(metrics.sent).toHaveBeenCalledWith('gpool', 'gpool.pool-invitation');
+  });
+
+  const inSpan = (traceFlags: number) =>
+    vi.spyOn(trace, 'getActiveSpan').mockReturnValue({
+      spanContext: () => ({ traceId: 'a'.repeat(32), spanId: 'b'.repeat(16), traceFlags }),
+      setAttribute: () => undefined,
+      setAttributes: () => undefined,
+      addEvent: () => undefined,
+      recordException: () => undefined,
+      setStatus: () => undefined,
+      end: () => undefined,
+      isRecording: () => traceFlags === 1,
+    } as never);
+
+  it('stores the trace of a sampled request with its claim', async () => {
+    inSpan(1);
+
+    await processor.process(payload, 'notification.email.requested.v1', 0, '10');
+
+    expect(repository.claim).toHaveBeenCalledWith(
+      expect.anything(),
+      'notification.email.requested.v1',
+      payload,
+      'a'.repeat(32),
+      expect.any(String),
+      config.kafka.processingLeaseMs
+    );
+    vi.restoreAllMocks();
+  });
+
+  it('stores no trace for a request that was not sampled, because none was kept', async () => {
+    inSpan(0);
+
+    await processor.process(payload, 'notification.email.requested.v1', 0, '10');
+
+    expect(repository.claim).toHaveBeenCalledWith(
+      expect.anything(),
+      'notification.email.requested.v1',
+      payload,
+      '',
+      expect.any(String),
+      config.kafka.processingLeaseMs
+    );
+    vi.restoreAllMocks();
   });
 
   it('acknowledges a terminal duplicate without rendering or sending', async () => {
