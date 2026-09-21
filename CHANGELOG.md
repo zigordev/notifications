@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.19](https://github.com/zigordev/notifications/compare/v0.1.18...v0.1.19) (2026-09-21)
+
+
+### Features
+
+* **notifications:** flat log events, SMTP health and a deploy that checks it ([#126](https://github.com/zigordev/notifications/issues/126)) ([754e11d](https://github.com/zigordev/notifications/commit/754e11d4babfff94cb0dd3e72c61d1ecf09bdf71))
+
 ## [0.1.18](https://github.com/zigordev/notifications/compare/v0.1.17...v0.1.18) (2026-09-20)
 
 
