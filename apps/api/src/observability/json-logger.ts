@@ -1,4 +1,4 @@
-import { trace } from '@opentelemetry/api';
+import { trace, TraceFlags } from '@opentelemetry/api';
 
 export type LogLevel = 'debug' | 'error' | 'info' | 'warn';
 
@@ -77,7 +77,10 @@ export function writeLogRecord(
   }
 
   if (context) record.context = context;
-  if (spanContext?.traceId) {
+  if (
+    spanContext?.traceId &&
+    (spanContext.traceFlags & TraceFlags.SAMPLED) === TraceFlags.SAMPLED
+  ) {
     record.traceId = spanContext.traceId;
     record.spanId = spanContext.spanId;
   }

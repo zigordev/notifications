@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Attributes, trace } from '@opentelemetry/api';
+import { Attributes, trace, TraceFlags } from '@opentelemetry/api';
 import { randomUUID } from 'node:crypto';
 import {
   errorClass,
@@ -277,5 +277,7 @@ export class NotificationProcessorService {
 }
 
 function currentTraceId(): string {
-  return trace.getActiveSpan()?.spanContext().traceId ?? '';
+  const spanContext = trace.getActiveSpan()?.spanContext();
+  if (!spanContext?.traceId) return '';
+  return (spanContext.traceFlags & TraceFlags.SAMPLED) !== 0 ? spanContext.traceId : '';
 }
