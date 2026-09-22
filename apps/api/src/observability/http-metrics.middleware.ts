@@ -32,10 +32,7 @@ export function httpMetricsMiddleware(req: Request, res: Response, next: NextFun
   res.on('finish', () => {
     const seconds = Number(process.hrtime.bigint() - start) / 1e9;
 
-    const route =
-      (req.route?.path as string | undefined) ??
-      (req.baseUrl ? `${req.baseUrl}${req.path}` : req.path);
-    if (!route) return;
+    const route = (req.route?.path as string | undefined) ?? 'unmatched';
 
     const labels = { method: req.method, route, status: String(res.statusCode) };
     httpRequestsTotal.inc(labels, 1);

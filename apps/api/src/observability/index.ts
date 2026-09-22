@@ -15,3 +15,12 @@ export { JsonLogger, MetricsController, ObservabilityModule } from './nest';
 export { allFlags, isEnabled, registerFlags } from './feature-flags';
 export type { FlagDefinition, ResolvedFlag } from './feature-flags';
 export { recordHealth } from './health-metrics';
+export { startAtZero } from './start-at-zero';
+export {
+  logRequestFailed,
+  logServiceStarted,
+  logServiceStopping,
+  observeProcessFailures,
+} from './standard-events';
+export type { ProcessFailureOptions, RequestFailure } from './standard-events';
+export { LifecycleService } from './lifecycle.service';

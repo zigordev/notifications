@@ -6,13 +6,15 @@ import { NotificationConsumerService } from '../kafka/notification-consumer.serv
 import { HealthService } from './health.service';
 
 describe('HealthService', () => {
-  const warn = vi.fn();
-  const logger = { warn } as unknown as JsonLogger;
+  const log = vi.fn();
+  const error = vi.fn();
+  const logger = { log, error } as unknown as JsonLogger;
   const relay = (available: boolean) =>
     ({ isAvailable: () => available }) as unknown as EmailSenderService;
 
   beforeEach(() => {
-    warn.mockClear();
+    log.mockClear();
+    error.mockClear();
   });
 
   it('reports readiness only when PostgreSQL and Kafka are ready', async () => {
@@ -56,7 +58,33 @@ describe('HealthService', () => {
       },
     });
     expect(JSON.stringify(result)).not.toContain('password secret');
-    expect(warn).toHaveBeenCalledWith('PostgreSQL readiness check failed', 'HealthService');
+    expect(error).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'postgres.unavailable', errorClass: 'Error' }),
+      undefined,
+      'HealthService'
+    );
+  });
+
+  it('logs an outage when it starts and when it ends, not on every probe', async () => {
+    const ping = vi.fn().mockRejectedValue(new Error('connection refused'));
+    const database = {
+      ping,
+      isClosing: vi.fn().mockReturnValue(false),
+    } as unknown as DatabaseService;
+    const kafka = {
+      isReady: vi.fn().mockReturnValue(true),
+    } as unknown as NotificationConsumerService;
+    const health = new HealthService(database, kafka, relay(true), logger);
+
+    await health.check();
+    await health.check();
+    ping.mockResolvedValue(undefined);
+    await health.check();
+    await health.check();
+
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalledWith({ event: 'postgres.recovered' }, 'HealthService');
   });
 
   it('reports PostgreSQL down without a warning while the pool is closing for shutdown', async () => {
@@ -78,7 +106,7 @@ describe('HealthService', () => {
         smtp: { status: 'up' },
       },
     });
-    expect(warn).not.toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
   });
 });
 
@@ -88,7 +116,7 @@ it('is unhealthy when the relay will not take an email, whatever else is working
     isReady: vi.fn().mockReturnValue(true),
   } as unknown as NotificationConsumerService;
   const relayDown = { isAvailable: () => false } as unknown as EmailSenderService;
-  const logger = { warn: vi.fn() } as unknown as JsonLogger;
+  const logger = { log: vi.fn(), error: vi.fn() } as unknown as JsonLogger;
 
   const body = await new HealthService(database, kafka, relayDown, logger).check();
 

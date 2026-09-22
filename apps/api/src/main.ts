@@ -9,10 +9,16 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { ProblemDetailsFilter } from './common/http/problem-details.filter';
-import { httpMetricsMiddleware, JsonLogger } from './observability';
+import {
+  httpMetricsMiddleware,
+  JsonLogger,
+  logServiceStarted,
+  observeProcessFailures,
+} from './observability';
 import { APP_CONFIG, AppConfig } from './config/app-config';
 
 async function bootstrap(): Promise<void> {
+  observeProcessFailures();
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });
@@ -40,6 +46,8 @@ async function bootstrap(): Promise<void> {
   app.set('trust proxy', config.trustProxy);
   app.enableShutdownHooks();
   await app.listen(config.port, '0.0.0.0');
+
+  logServiceStarted({ port: config.port });
 }
 
 void bootstrap();
