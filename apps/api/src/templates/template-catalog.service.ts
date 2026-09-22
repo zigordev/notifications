@@ -70,6 +70,10 @@ export class TemplateCatalogService {
     );
   }
 
+  templateIds(): string[] {
+    return Object.keys(DEFINITIONS);
+  }
+
   async render(templateId: string, data: Record<string, unknown>): Promise<RenderedEmail> {
     const locale = normalizeLocale(data.locale);
     const definition = DEFINITIONS[templateId]?.[locale];

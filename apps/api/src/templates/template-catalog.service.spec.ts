@@ -97,6 +97,17 @@ describe('TemplateCatalogService', () => {
     }
   );
 
+  it('lists every template by id, each named after the app that sends it', () => {
+    expect(catalog.templateIds()).toEqual([
+      'gpool.pool-invitation',
+      'gpool.pool-access-request',
+      'gpool.pool-access-granted',
+      'gpool.user-accepted-invitation',
+      'cv.contact-received',
+      'kini.team-invitation',
+    ]);
+  });
+
   it('defaults to the existing Spanish locale and escapes HTML data', async () => {
     const result = await catalog.render('gpool.pool-invitation', invitationData);
 
