@@ -45,14 +45,16 @@ updates:
       dev-dependencies:
         dependency-type: development
         update-types: [minor, patch]
+        exclude-patterns: ['@nestjs/*', '@vitest/*']
       production-patch:
         dependency-type: production
         update-types: [patch]
+        exclude-patterns: ['@nestjs/*']
     commit-message:
       prefix: chore
       include: scope
   - package-ecosystem: docker
-    directory: /
+    directory: /apps/api
     schedule:
       interval: weekly
       day: tuesday
@@ -78,6 +80,9 @@ updates:
     # urgent enough to be worth being the first to install it.
     cooldown:
       default-days: 7
+    groups:
+      codeql:
+        patterns: ['github/codeql-action/*']
     commit-message:
       prefix: ci
       include: scope
