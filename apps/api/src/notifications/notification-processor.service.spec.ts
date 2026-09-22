@@ -30,7 +30,7 @@ describe('NotificationProcessorService', () => {
       provider: 'gmail-smtp',
     },
   } as AppConfig;
-  let templates: Mocked<Pick<TemplateCatalogService, 'render'>>;
+  let templates: Mocked<Pick<TemplateCatalogService, 'render' | 'templateIds'>>;
   let emailSender: Mocked<Pick<EmailSenderService, 'send'>>;
   let repository: Mocked<
     Pick<
@@ -55,6 +55,7 @@ describe('NotificationProcessorService', () => {
       | 'renderDuration'
       | 'sendDuration'
       | 'deliveryDuration'
+      | 'startAtZero'
     >
   >;
   let logger: Mocked<Pick<JsonLogger, 'debug' | 'error' | 'log' | 'warn'>>;
@@ -66,6 +67,7 @@ describe('NotificationProcessorService', () => {
         subject: 'Invitation',
         html: '<p>Invitation</p>',
       }),
+      templateIds: vi.fn().mockReturnValue(['gpool.pool-invitation', 'cv.contact-received']),
     };
     emailSender = {
       send: vi.fn().mockResolvedValue(undefined),
@@ -92,6 +94,7 @@ describe('NotificationProcessorService', () => {
       renderDuration: vi.fn(),
       sendDuration: vi.fn(),
       deliveryDuration: vi.fn(),
+      startAtZero: vi.fn(),
     };
     logger = {
       log: vi.fn(),
@@ -106,6 +109,15 @@ describe('NotificationProcessorService', () => {
       repository as unknown as NotificationRepository,
       metrics as unknown as NotificationMetricsService,
       logger as unknown as JsonLogger
+    );
+  });
+
+  it('starts every template at zero in the metrics when the module starts', () => {
+    processor.onModuleInit();
+
+    expect(metrics.startAtZero).toHaveBeenCalledWith(
+      ['gpool.pool-invitation', 'cv.contact-received'],
+      'gmail-smtp'
     );
   });
 

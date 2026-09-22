@@ -25,6 +25,38 @@ describe('NotificationMetricsService', () => {
     );
   });
 
+  it('starts every template at zero, so the first email after a start is counted', async () => {
+    const text = await metricsFor((service) => {
+      service.startAtZero(['cv.contact-received', 'gpool.pool-invitation'], 'gmail-smtp');
+      service.received('cv', 'cv.contact-received');
+    });
+
+    expect(text).toContain(
+      'notifications_received_total{source_app="cv",template_id="cv.contact-received"} 1'
+    );
+    expect(text).toContain(
+      'notifications_sent_total{source_app="cv",template_id="cv.contact-received"} 0'
+    );
+    expect(text).toContain(
+      'notifications_failed_total{source_app="gpool",template_id="gpool.pool-invitation"} 0'
+    );
+    expect(text).toContain(
+      'notifications_deduplicated_total{source_app="gpool",template_id="gpool.pool-invitation"} 0'
+    );
+    expect(text).toContain(
+      'notifications_dlq_total{source_app="cv",template_id="cv.contact-received"} 0'
+    );
+    expect(text).toContain(
+      'notification_render_duration_seconds_count{template_id="gpool.pool-invitation"} 0'
+    );
+    expect(text).toContain(
+      'notification_send_duration_seconds_count{provider="gmail-smtp",template_id="cv.contact-received"} 0'
+    );
+    expect(text).toContain(
+      'notification_delivery_duration_seconds_count{source_app="gpool",template_id="gpool.pool-invitation"} 0'
+    );
+  });
+
   it('measures the whole wait, from the producer asking to the email being sent', async () => {
     const requestedAt = new Date(Date.now() - 4000).toISOString();
     const text = await metricsFor((service) =>
