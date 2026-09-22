@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.23](https://github.com/zigordev/notifications/compare/v0.1.22...v0.1.23) (2026-09-22)
+
+
+### Bug Fixes
+
+* **metrics:** start every template's counters at zero ([#147](https://github.com/zigordev/notifications/issues/147)) ([0498759](https://github.com/zigordev/notifications/commit/0498759e2e7ba655e88e1d8e16a81a9ce1772d9c))
+
 ## [0.1.22](https://github.com/zigordev/notifications/compare/v0.1.21...v0.1.22) (2026-09-21)
 
 
