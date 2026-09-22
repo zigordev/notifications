@@ -75,6 +75,25 @@ export class NotificationMetricsService {
     });
   }
 
+  startAtZero(templateIds: readonly string[], provider: string): void {
+    for (const templateId of templateIds) {
+      const [sourceApp = templateId] = templateId.split('.');
+      const labels = { source_app: sourceApp, template_id: templateId };
+      for (const counter of [
+        this.receivedCounter,
+        this.sentCounter,
+        this.failedCounter,
+        this.deduplicatedCounter,
+        this.deadLetterCounter,
+      ]) {
+        counter.inc(labels, 0);
+      }
+      this.renderDurationHistogram.zero({ template_id: templateId });
+      this.sendDurationHistogram.zero({ provider, template_id: templateId });
+      this.deliveryDurationHistogram.zero(labels);
+    }
+  }
+
   received(sourceApp: string, templateId: string): void {
     this.receivedCounter.inc({
       source_app: sourceApp,

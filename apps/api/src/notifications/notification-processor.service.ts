@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { Attributes, trace, TraceFlags } from '@opentelemetry/api';
 import { randomUUID } from 'node:crypto';
 import {
@@ -26,7 +26,7 @@ import { NotificationRepository } from './notification.repository';
 export type ProcessingResult = 'duplicate' | 'sent';
 
 @Injectable()
-export class NotificationProcessorService {
+export class NotificationProcessorService implements OnModuleInit {
   constructor(
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     private readonly templates: TemplateCatalogService,
@@ -35,6 +35,10 @@ export class NotificationProcessorService {
     private readonly metrics: NotificationMetricsService,
     private readonly logger: JsonLogger
   ) {}
+
+  onModuleInit(): void {
+    this.metrics.startAtZero(this.templates.templateIds(), this.config.smtp.provider);
+  }
 
   private withSpan<T>(name: string, attributes: Attributes, run: () => Promise<T>): Promise<T> {
     return tracer().startActiveSpan(name, { attributes }, async (span) => {
