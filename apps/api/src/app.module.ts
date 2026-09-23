@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ObservabilityModule } from './observability';
+import { LifecycleService, ObservabilityModule } from './observability';
 import { APP_CONFIG, loadAppConfig } from './config/app-config';
 import { DatabaseService } from './database/database.service';
 import {
@@ -41,6 +41,7 @@ import { TemplateCatalogService } from './templates/template-catalog.service';
     NotificationConsumerService,
     HealthService,
     TelemetryLifecycleService,
+    LifecycleService,
   ],
 })
 export class AppModule {}

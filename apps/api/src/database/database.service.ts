@@ -42,10 +42,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     try {
       await client.query('SELECT 1');
       await runMigrations(client, join(__dirname, '../resources/db/migration'));
-      this.logger.log(
-        'PostgreSQL connection established and migrations applied',
-        DatabaseService.name
-      );
+      this.logger.log({ event: 'postgres.migrations_applied' }, DatabaseService.name);
     } finally {
       client.release();
     }

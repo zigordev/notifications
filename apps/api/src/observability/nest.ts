@@ -1,5 +1,6 @@
 import { Controller, Get, Header, Injectable, LoggerService, Module } from '@nestjs/common';
 import { Registry } from 'prom-client';
+import { isFrameworkChatter } from './framework-logs';
 import { writeLogRecord } from './json-logger';
 import { registry } from './metrics.registry';
 
@@ -20,9 +21,9 @@ export class MetricsController {
 }
 
 /**
- * Nest's `LoggerService` over `writeLogRecord`, so framework logs — bootstrap,
- * route mapping, unhandled exceptions — land in Loki in the same shape and with
- * the same `traceId` as application logs.
+ * Nest's `LoggerService` over `writeLogRecord`, so framework logs — unhandled
+ * exceptions, and bootstrap and route mapping at debug — land in Loki in the
+ * same shape and with the same `traceId` as application logs.
  *
  * Install it with `app.useLogger(app.get(JsonLogger))` after the app is
  * created, and `new NestFactory.create(AppModule, { bufferLogs: true })` so the
@@ -31,7 +32,7 @@ export class MetricsController {
 @Injectable()
 export class JsonLogger implements LoggerService {
   log(message: unknown, context?: string): void {
-    writeLogRecord('info', message, context);
+    writeLogRecord(isFrameworkChatter(message, context) ? 'debug' : 'info', message, context);
   }
 
   error(message: unknown, stack?: string, context?: string): void {

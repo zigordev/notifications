@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { errorClass, errorReason } from '../common/errors';
 import { JsonLogger, recordHealth } from '../observability';
 import { DatabaseService } from '../database/database.service';
 import { EmailSenderService } from '../email/email-sender.service';
@@ -24,6 +25,8 @@ export interface HealthBody {
 
 @Injectable()
 export class HealthService {
+  private databaseUp: boolean | undefined;
+
   constructor(
     private readonly database: DatabaseService,
     private readonly kafka: NotificationConsumerService,
@@ -37,11 +40,10 @@ export class HealthService {
     let databaseHealthy = true;
     try {
       await this.database.ping();
-    } catch {
+      this.noteDatabase(true);
+    } catch (error) {
       databaseHealthy = false;
-      if (!this.database.isClosing()) {
-        this.logger.warn('PostgreSQL readiness check failed', HealthService.name);
-      }
+      if (!this.database.isClosing()) this.noteDatabase(false, error);
     }
     const kafkaHealthy = this.kafka.isReady();
     const smtpHealthy = this.emailSender.isAvailable();
@@ -58,5 +60,18 @@ export class HealthService {
     recordHealth(status, components);
 
     return { status, service: SERVICE_NAME, components };
+  }
+
+  private noteDatabase(up: boolean, error?: unknown): void {
+    if (up && this.databaseUp === false) {
+      this.logger.log({ event: 'postgres.recovered' }, HealthService.name);
+    } else if (!up && this.databaseUp !== false) {
+      this.logger.error(
+        { event: 'postgres.unavailable', errorClass: errorClass(error), error: errorReason(error) },
+        undefined,
+        HealthService.name
+      );
+    }
+    this.databaseUp = up;
   }
 }
