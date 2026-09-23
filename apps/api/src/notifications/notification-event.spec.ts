@@ -59,8 +59,17 @@ describe('parseNotificationEvent', () => {
     expect(parse).toThrow(expectedField);
   });
 
-  it('leaves malformed JSON as a retryable parser failure', () => {
-    expect(() => parseNotificationEvent('{')).toThrow(SyntaxError);
+  it('classifies malformed JSON as a payload that can never parse', () => {
+    let thrown: unknown;
+    try {
+      parseNotificationEvent('{malformed-json');
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(NonRetryableNotificationError);
+    expect((thrown as Error).message).toContain('Invalid notification payload');
+    expect((thrown as Error).cause).toBeInstanceOf(SyntaxError);
   });
 });
 

@@ -442,6 +442,21 @@ describe('NotificationProcessorService', () => {
     expect(metrics.deadLettered).not.toHaveBeenCalled();
   });
 
+  it('refuses to skip an unparseable dead letter it could not record', async () => {
+    repository.recordDeadLetter.mockRejectedValue(new Error('Connection terminated unexpectedly'));
+
+    await expect(
+      processor.processDeadLetter('{not-json', 'notification.email.requested.v1.DLT', 1, '18')
+    ).rejects.toThrow('Connection terminated unexpectedly');
+
+    expect(metrics.deadLetteredUnparseable).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'notification.dlt_payload_invalid' }),
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
   it('allows only one SMTP send and keeps the in-flight duplicate unacknowledged', async () => {
     let claimed = false;
     repository.claim.mockImplementation(() => {
