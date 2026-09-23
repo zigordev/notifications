@@ -52,6 +52,7 @@ describe('NotificationProcessorService', () => {
       | 'failed'
       | 'duplicate'
       | 'deadLettered'
+      | 'deadLetteredUnparseable'
       | 'renderDuration'
       | 'sendDuration'
       | 'deliveryDuration'
@@ -91,6 +92,7 @@ describe('NotificationProcessorService', () => {
       failed: vi.fn(),
       duplicate: vi.fn(),
       deadLettered: vi.fn(),
+      deadLetteredUnparseable: vi.fn(),
       renderDuration: vi.fn(),
       sendDuration: vi.fn(),
       deliveryDuration: vi.fn(),
@@ -372,6 +374,7 @@ describe('NotificationProcessorService', () => {
       'Message routed to DLT'
     );
     expect(metrics.deadLettered).toHaveBeenCalledWith('gpool', 'gpool.pool-invitation');
+    expect(metrics.deadLetteredUnparseable).not.toHaveBeenCalled();
     expect(repository.recordDeadLetter).toHaveBeenCalledWith(
       expect.objectContaining({
         requestId: 'original-message',
@@ -395,7 +398,7 @@ describe('NotificationProcessorService', () => {
     expect(metrics.deadLettered).toHaveBeenCalledWith('gpool', 'gpool.pool-invitation');
   });
 
-  it('persists malformed dead-letter payloads without requiring a request row', async () => {
+  it('counts and persists malformed dead-letter payloads without requiring a request row', async () => {
     await processor.processDeadLetter(
       '{not-json',
       'notification.email.requested.v1.DLT',
@@ -418,6 +421,8 @@ describe('NotificationProcessorService', () => {
     expect(repository.recordDeadLetter.mock.calls[0]?.[0].error).toContain(
       'Invalid original payload'
     );
+    expect(metrics.deadLetteredUnparseable).toHaveBeenCalledTimes(1);
+    expect(metrics.deadLettered).not.toHaveBeenCalled();
   });
 
   it('allows only one SMTP send and keeps the in-flight duplicate unacknowledged', async () => {
