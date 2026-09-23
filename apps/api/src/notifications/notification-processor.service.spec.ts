@@ -316,6 +316,23 @@ describe('NotificationProcessorService', () => {
     expect(metrics.failed).toHaveBeenCalled();
   });
 
+  it('names both failed cleanup steps after the estate event convention', async () => {
+    emailSender.send.mockRejectedValue(new Error('SMTP unavailable'));
+    repository.recordAttempt.mockRejectedValue(new Error('audit insert failed'));
+    repository.markFailed.mockRejectedValue(new Error('lease still held'));
+
+    await expect(
+      processor.process(payload, 'notification.email.requested.v1', 0, '24')
+    ).rejects.toThrow('SMTP unavailable');
+
+    const events = logger.error.mock.calls.map(([fields]) => (fields as { event: string }).event);
+
+    expect(events).toEqual([
+      'notification.failure_audit_failed',
+      'notification.failure_lease_release_failed',
+    ]);
+  });
+
   it('releases the processing lease and audits a non-retryable render failure', async () => {
     templates.render.mockRejectedValue(
       new NonRetryableNotificationError('Failed to render template')
