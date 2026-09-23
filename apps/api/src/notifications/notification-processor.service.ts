@@ -168,8 +168,8 @@ export class NotificationProcessorService implements OnModuleInit {
             {
               event:
                 index === 0
-                  ? 'notification_failure_audit_failed'
-                  : 'notification_failure_lease_release_failed',
+                  ? 'notification.failure_audit_failed'
+                  : 'notification.failure_lease_release_failed',
               requestId: claim.requestId,
               error: errorMessage(result.reason),
             },
