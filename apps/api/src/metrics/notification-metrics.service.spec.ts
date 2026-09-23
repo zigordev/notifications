@@ -46,6 +46,7 @@ describe('NotificationMetricsService', () => {
     expect(text).toContain(
       'notifications_dlq_total{source_app="cv",template_id="cv.contact-received"} 0'
     );
+    expect(text).toContain('notifications_dlq_total{source_app="unknown",template_id="unknown"} 0');
     expect(text).toContain(
       'notification_render_duration_seconds_count{template_id="gpool.pool-invitation"} 0'
     );
@@ -54,6 +55,19 @@ describe('NotificationMetricsService', () => {
     );
     expect(text).toContain(
       'notification_delivery_duration_seconds_count{source_app="gpool",template_id="gpool.pool-invitation"} 0'
+    );
+  });
+
+  it('counts a dead letter whose payload never parsed, under one closed label set', async () => {
+    const text = await metricsFor((service) => {
+      service.startAtZero(['cv.contact-received'], 'gmail-smtp');
+      service.deadLetteredUnparseable();
+      service.deadLetteredUnparseable();
+    });
+
+    expect(text).toContain('notifications_dlq_total{source_app="unknown",template_id="unknown"} 2');
+    expect(text).toContain(
+      'notifications_dlq_total{source_app="cv",template_id="cv.contact-received"} 0'
     );
   });
 

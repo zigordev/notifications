@@ -1,6 +1,8 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { Counter, Histogram, Registry } from 'prom-client';
 
+const UNPARSEABLE_LABELS = { source_app: 'unknown', template_id: 'unknown' } as const;
+
 @Injectable()
 export class NotificationMetricsService {
   readonly registry: Registry;
@@ -92,6 +94,7 @@ export class NotificationMetricsService {
       this.sendDurationHistogram.zero({ provider, template_id: templateId });
       this.deliveryDurationHistogram.zero(labels);
     }
+    this.deadLetterCounter.inc(UNPARSEABLE_LABELS, 0);
   }
 
   received(sourceApp: string, templateId: string): void {
@@ -127,6 +130,10 @@ export class NotificationMetricsService {
       source_app: sourceApp,
       template_id: templateId,
     });
+  }
+
+  deadLetteredUnparseable(): void {
+    this.deadLetterCounter.inc(UNPARSEABLE_LABELS);
   }
 
   renderDuration(templateId: string, durationMs: number): void {

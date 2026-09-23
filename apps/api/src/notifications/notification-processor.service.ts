@@ -231,6 +231,7 @@ export class NotificationProcessorService implements OnModuleInit {
         event: null,
         requestId: null,
       });
+      this.metrics.deadLetteredUnparseable();
       this.logger.error(
         {
           event: 'notification.dlt_payload_invalid',
