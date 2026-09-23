@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.27](https://github.com/zigordev/notifications/compare/v0.1.26...v0.1.27) (2026-09-23)
+
+
+### Bug Fixes
+
+* **observability:** take the kit as it is, byte for byte ([#155](https://github.com/zigordev/notifications/issues/155)) ([8e88fc5](https://github.com/zigordev/notifications/commit/8e88fc53872fa9cf669638868f4df27973cef358))
+
 ## [0.1.26](https://github.com/zigordev/notifications/compare/v0.1.25...v0.1.26) (2026-09-23)
 
 
