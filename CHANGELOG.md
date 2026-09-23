@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.26](https://github.com/zigordev/notifications/compare/v0.1.25...v0.1.26) (2026-09-23)
+
+
+### Bug Fixes
+
+* **observability:** rename the last two snake_case event names ([#153](https://github.com/zigordev/notifications/issues/153)) ([84c1de0](https://github.com/zigordev/notifications/commit/84c1de0559c0a4d90a69269297c8b7c7293b4621))
+
 ## [0.1.25](https://github.com/zigordev/notifications/compare/v0.1.24...v0.1.25) (2026-09-23)
 
 
