@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.24](https://github.com/zigordev/notifications/compare/v0.1.23...v0.1.24) (2026-09-23)
+
+
+### Features
+
+* **observability:** bring notifications-api to the estate's kit and events ([#149](https://github.com/zigordev/notifications/issues/149)) ([e82b2ca](https://github.com/zigordev/notifications/commit/e82b2ca6c20ca29cb725262679cd1a9ed2cc87fb))
+
 ## [0.1.23](https://github.com/zigordev/notifications/compare/v0.1.22...v0.1.23) (2026-09-22)
 
 
