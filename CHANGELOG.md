@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.25](https://github.com/zigordev/notifications/compare/v0.1.24...v0.1.25) (2026-09-23)
+
+
+### Bug Fixes
+
+* **notifications:** count dead letters whose payload never parsed ([#151](https://github.com/zigordev/notifications/issues/151)) ([c3946fa](https://github.com/zigordev/notifications/commit/c3946faf4dacccf6fcb9ce8e492818bc9bb3321e))
+
 ## [0.1.24](https://github.com/zigordev/notifications/compare/v0.1.23...v0.1.24) (2026-09-23)
 
 
