@@ -222,6 +222,9 @@ export class NotificationProcessorService implements OnModuleInit {
     try {
       event = parseNotificationEvent(rawPayload);
     } catch (error) {
+      if (!payloadCanNeverParse(error)) {
+        throw error;
+      }
       await this.repository.recordDeadLetter({
         rawPayload,
         topic,
@@ -279,6 +282,10 @@ export class NotificationProcessorService implements OnModuleInit {
       throw new NonRetryableNotificationError(`Unsupported channel: ${event.channel}`);
     }
   }
+}
+
+function payloadCanNeverParse(error: unknown): boolean {
+  return error instanceof NonRetryableNotificationError;
 }
 
 function currentTraceId(): string {

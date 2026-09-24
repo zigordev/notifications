@@ -173,6 +173,95 @@ describe('NotificationConsumerService lifecycle', () => {
     ]);
   });
 
+  it('commits past a dead letter whose payload can never be parsed', async () => {
+    const processor = {
+      processDeadLetter: vi.fn().mockResolvedValue(undefined),
+    };
+    const relay = { isAvailable: vi.fn().mockReturnValue(true) };
+    const resolveOffset = vi.fn();
+    const service = new NotificationConsumerService(
+      config,
+      processor as unknown as NotificationProcessorService,
+      {} as RetryExecutor,
+      relay as unknown as EmailSenderService,
+      logger as unknown as JsonLogger
+    );
+    const payload = {
+      batch: {
+        topic: config.kafka.emailDltTopic,
+        partition: 1,
+        messages: [
+          {
+            offset: '0',
+            value: Buffer.from('{malformed-json'),
+            headers: {
+              'kafka_dlt-exception-message': Buffer.from('Invalid original payload'),
+            },
+          },
+        ],
+      },
+      isRunning: () => true,
+      isStale: () => false,
+      resolveOffset,
+      heartbeat: vi.fn().mockResolvedValue(undefined),
+    } as unknown as EachBatchPayload;
+
+    await (
+      service as unknown as { processBatch: (batch: EachBatchPayload) => Promise<void> }
+    ).processBatch(payload);
+
+    expect(processor.processDeadLetter).toHaveBeenCalledWith(
+      '{malformed-json',
+      config.kafka.emailDltTopic,
+      1,
+      '0',
+      'Invalid original payload'
+    );
+    expect(resolveOffset).toHaveBeenCalledWith('0');
+    expect(kafka.consumer.commitOffsets).toHaveBeenCalledWith([
+      {
+        topic: config.kafka.emailDltTopic,
+        partition: 1,
+        offset: '1',
+      },
+    ]);
+  });
+
+  it('holds the dead-letter offset when auditing the record fails right now', async () => {
+    const processor = {
+      processDeadLetter: vi.fn().mockRejectedValue(new Error('Connection terminated unexpectedly')),
+    };
+    const relay = { isAvailable: vi.fn().mockReturnValue(true) };
+    const resolveOffset = vi.fn();
+    const service = new NotificationConsumerService(
+      config,
+      processor as unknown as NotificationProcessorService,
+      {} as RetryExecutor,
+      relay as unknown as EmailSenderService,
+      logger as unknown as JsonLogger
+    );
+    const payload = {
+      batch: {
+        topic: config.kafka.emailDltTopic,
+        partition: 1,
+        messages: [{ offset: '0', value: Buffer.from('{malformed-json') }],
+      },
+      isRunning: () => true,
+      isStale: () => false,
+      resolveOffset,
+      heartbeat: vi.fn().mockResolvedValue(undefined),
+    } as unknown as EachBatchPayload;
+
+    await expect(
+      (
+        service as unknown as { processBatch: (batch: EachBatchPayload) => Promise<void> }
+      ).processBatch(payload)
+    ).rejects.toThrow('Connection terminated unexpectedly');
+
+    expect(resolveOffset).not.toHaveBeenCalled();
+    expect(kafka.consumer.commitOffsets).not.toHaveBeenCalled();
+  });
+
   beforeEach(() => {
     kafka.handlers.clear();
     logger = {

@@ -1,4 +1,4 @@
-import { NonRetryableNotificationError } from '../common/errors';
+import { errorMessage, NonRetryableNotificationError } from '../common/errors';
 
 export interface NotificationEvent {
   messageId: string;
@@ -26,7 +26,7 @@ export function isTerminalSuccess(state: NotificationRequestState): boolean {
 }
 
 export function parseNotificationEvent(payload: string): NotificationEvent {
-  const parsed: unknown = JSON.parse(payload);
+  const parsed = parseJson(payload);
   if (!isRecord(parsed)) {
     throw invalid('payload must be a JSON object');
   }
@@ -89,6 +89,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function invalid(message: string): NonRetryableNotificationError {
-  return new NonRetryableNotificationError(`Invalid notification payload: ${message}`);
+function parseJson(payload: string): unknown {
+  try {
+    const parsed: unknown = JSON.parse(payload);
+    return parsed;
+  } catch (error) {
+    throw invalid(errorMessage(error), error);
+  }
+}
+
+function invalid(message: string, cause?: unknown): NonRetryableNotificationError {
+  return new NonRetryableNotificationError(
+    `Invalid notification payload: ${message}`,
+    cause === undefined ? undefined : { cause }
+  );
 }
