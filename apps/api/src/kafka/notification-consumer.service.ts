@@ -21,22 +21,27 @@ import {
 } from '../observability/spans';
 import { APP_CONFIG, AppConfig } from '../config/app-config';
 import { EmailSenderService } from '../email/email-sender.service';
+import { NotificationMetricsService } from '../metrics/notification-metrics.service';
 import { NotificationProcessorService } from '../notifications/notification-processor.service';
 import { RetryExecutor } from './retry-executor';
 
 CompressionCodecs[CompressionTypes.Snappy] = SnappyCodec;
+
+const MAX_DEAD_LETTER_BACKOFF_MS = 30_000;
 
 @Injectable()
 export class NotificationConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly consumer: Consumer;
   private readonly producer: Producer;
   private ready = false;
+  private blockedRecord: { key: string; failures: number } | null = null;
 
   constructor(
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     private readonly processor: NotificationProcessorService,
     private readonly retryExecutor: RetryExecutor,
     private readonly emailSender: EmailSenderService,
+    private readonly metrics: NotificationMetricsService,
     private readonly logger: JsonLogger
   ) {
     const kafka = new Kafka({
@@ -126,10 +131,17 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         return;
       }
 
-      const handled = await this.traceMessage(batchPayload, message);
+      let handled: boolean;
+      try {
+        handled = await this.traceMessage(batchPayload, message);
+      } catch (error) {
+        this.reportBlockedRecord(batch.topic, batch.partition, message.offset, error);
+        throw error;
+      }
 
       if (!handled) return;
 
+      this.blockedRecord = null;
       batchPayload.resolveOffset(message.offset);
       await this.consumer.commitOffsets([
         {
@@ -210,7 +222,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
           return false;
         }
 
-        await this.publishDeadLetter(batch.topic, batch.partition, message, error);
+        await this.publishDeadLetter(batchPayload, batch.topic, batch.partition, message, error);
       }
     }
 
@@ -244,6 +256,7 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
   }
 
   private async publishDeadLetter(
+    batchPayload: EachBatchPayload,
     originalTopic: string,
     partition: number,
     message: KafkaMessage,
@@ -256,9 +269,9 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
       'kafka_dlt-original-offset': Buffer.from(message.offset),
       'kafka_dlt-exception-message': Buffer.from(errorMessage(error)),
     };
-    await this.producer.send({
+    const record = {
       topic: this.config.kafka.emailDltTopic,
-      acks: -1,
+      acks: -1 as const,
       messages: [
         {
           ...(message.key ? { key: message.key } : {}),
@@ -267,7 +280,54 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
           headers,
         },
       ],
-    });
+    };
+    const maxAttempts = this.config.kafka.retryMaxAttempts;
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        await this.producer.send(record);
+        break;
+      } catch (publishError) {
+        if (attempt >= maxAttempts) {
+          this.metrics.deadLetterPublishFailed('exhausted');
+          this.logger.error(
+            {
+              event: 'notification.dlt_publish_exhausted',
+              originalTopic,
+              dltTopic: this.config.kafka.emailDltTopic,
+              partition,
+              offset: message.offset,
+              attempts: maxAttempts,
+              errorClass: errorClass(publishError),
+              error: errorReason(publishError),
+            },
+            publishError instanceof Error ? publishError.stack : undefined,
+            NotificationConsumerService.name
+          );
+          throw publishError;
+        }
+        this.metrics.deadLetterPublishFailed('retried');
+        const delayMs = Math.min(
+          this.config.kafka.retryIntervalMs * 2 ** (attempt - 1),
+          MAX_DEAD_LETTER_BACKOFF_MS
+        );
+        this.logger.warn(
+          {
+            event: 'notification.dlt_publish_retry_scheduled',
+            originalTopic,
+            dltTopic: this.config.kafka.emailDltTopic,
+            partition,
+            offset: message.offset,
+            attempt,
+            maxAttempts,
+            delayMs,
+            errorClass: errorClass(publishError),
+            error: errorReason(publishError),
+          },
+          NotificationConsumerService.name
+        );
+        await this.waitWithHeartbeat(delayMs, () => batchPayload.heartbeat());
+      }
+    }
     this.logger.warn(
       {
         event: 'notification.routed_to_dlt',
@@ -278,6 +338,31 @@ export class NotificationConsumerService implements OnModuleInit, OnModuleDestro
         errorClass: errorClass(error),
         error: errorReason(error),
       },
+      NotificationConsumerService.name
+    );
+  }
+
+  private reportBlockedRecord(
+    topic: string,
+    partition: number,
+    offset: string,
+    error: unknown
+  ): void {
+    const key = `${topic}/${partition}/${offset}`;
+    const failures = this.blockedRecord?.key === key ? this.blockedRecord.failures + 1 : 1;
+    this.blockedRecord = { key, failures };
+
+    this.logger.error(
+      {
+        event: 'notification.record_blocked',
+        topic,
+        partition,
+        offset,
+        failures,
+        errorClass: errorClass(error),
+        error: errorReason(error),
+      },
+      error instanceof Error ? error.stack : undefined,
       NotificationConsumerService.name
     );
   }

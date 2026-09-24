@@ -15,6 +15,9 @@ describe('NotificationMetricsService', () => {
       service.failed('gpool', 'gpool.pool-invitation');
       service.duplicate('cv', 'cv.contact-message');
       service.deadLettered('gpool', 'gpool.pool-invitation');
+      service.deadLetterPublishFailed('retried');
+      service.deadLetterPublishFailed('retried');
+      service.deadLetterPublishFailed('exhausted');
     });
 
     expect(text).toContain(
@@ -23,6 +26,8 @@ describe('NotificationMetricsService', () => {
     expect(text).toContain(
       'notifications_dlq_total{source_app="gpool",template_id="gpool.pool-invitation"} 1'
     );
+    expect(text).toContain('notifications_dlq_publish_failures_total{outcome="retried"} 2');
+    expect(text).toContain('notifications_dlq_publish_failures_total{outcome="exhausted"} 1');
   });
 
   it('starts every template at zero, so the first email after a start is counted', async () => {
@@ -47,6 +52,8 @@ describe('NotificationMetricsService', () => {
       'notifications_dlq_total{source_app="cv",template_id="cv.contact-received"} 0'
     );
     expect(text).toContain('notifications_dlq_total{source_app="unknown",template_id="unknown"} 0');
+    expect(text).toContain('notifications_dlq_publish_failures_total{outcome="retried"} 0');
+    expect(text).toContain('notifications_dlq_publish_failures_total{outcome="exhausted"} 0');
     expect(text).toContain(
       'notification_render_duration_seconds_count{template_id="gpool.pool-invitation"} 0'
     );
