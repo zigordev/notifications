@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.29](https://github.com/zigordev/notifications/compare/v0.1.28...v0.1.29) (2026-09-24)
+
+
+### Bug Fixes
+
+* **kafka:** retry a failed dead-letter publish before it takes the consumer down ([#160](https://github.com/zigordev/notifications/issues/160)) ([5393d8d](https://github.com/zigordev/notifications/commit/5393d8d39deafd2a80bcf7d19d2bb427f1418f85))
+
 ## [0.1.28](https://github.com/zigordev/notifications/compare/v0.1.27...v0.1.28) (2026-09-24)
 
 
