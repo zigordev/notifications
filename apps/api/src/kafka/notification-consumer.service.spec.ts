@@ -41,6 +41,7 @@ vi.mock('kafkajs', () => {
 import { AppConfig } from '../config/app-config';
 import { JsonLogger } from '../observability';
 import { EmailSenderService } from '../email/email-sender.service';
+import { NotificationMetricsService } from '../metrics/notification-metrics.service';
 import { NotificationProcessorService } from '../notifications/notification-processor.service';
 import { EachBatchPayload } from 'kafkajs';
 import { RetryExecutor } from './retry-executor';
@@ -67,6 +68,8 @@ describe('NotificationConsumerService lifecycle', () => {
       consumerGroupId: 'notifications-api',
       emailTopic: 'notification.email.requested.v1',
       emailDltTopic: 'notification.email.requested.v1.DLT',
+      retryIntervalMs: 10,
+      retryMaxAttempts: 3,
     },
     smtp: { outageBackoffMs: 30_000 },
   } as AppConfig;
@@ -79,6 +82,7 @@ describe('NotificationConsumerService lifecycle', () => {
     kafka = ((await import('kafkajs')) as unknown as { __testing: KafkaMockState }).__testing;
   });
   let logger: Mocked<Pick<JsonLogger, 'error' | 'log' | 'warn'>>;
+  let metrics: Mocked<Pick<NotificationMetricsService, 'deadLetterPublishFailed'>>;
   let consumer: NotificationConsumerService;
 
   it('registers Snappy decompression for Kafka compatibility', () => {
@@ -99,6 +103,7 @@ describe('NotificationConsumerService lifecycle', () => {
       processor as unknown as NotificationProcessorService,
       retryExecutor as unknown as RetryExecutor,
       relay as unknown as EmailSenderService,
+      metrics as unknown as NotificationMetricsService,
       logger as unknown as JsonLogger
     );
     const payload = {
@@ -143,6 +148,7 @@ describe('NotificationConsumerService lifecycle', () => {
       processor as unknown as NotificationProcessorService,
       retryExecutor as unknown as RetryExecutor,
       relay as unknown as EmailSenderService,
+      metrics as unknown as NotificationMetricsService,
       logger as unknown as JsonLogger
     );
     const payload = {
@@ -184,6 +190,7 @@ describe('NotificationConsumerService lifecycle', () => {
       processor as unknown as NotificationProcessorService,
       {} as RetryExecutor,
       relay as unknown as EmailSenderService,
+      metrics as unknown as NotificationMetricsService,
       logger as unknown as JsonLogger
     );
     const payload = {
@@ -238,6 +245,7 @@ describe('NotificationConsumerService lifecycle', () => {
       processor as unknown as NotificationProcessorService,
       {} as RetryExecutor,
       relay as unknown as EmailSenderService,
+      metrics as unknown as NotificationMetricsService,
       logger as unknown as JsonLogger
     );
     const payload = {
@@ -262,8 +270,155 @@ describe('NotificationConsumerService lifecycle', () => {
     expect(kafka.consumer.commitOffsets).not.toHaveBeenCalled();
   });
 
+  it('names the record that keeps blocking its partition, with a rising failure count', async () => {
+    const processor = {
+      processDeadLetter: vi.fn().mockRejectedValue(new Error('Connection terminated unexpectedly')),
+    };
+    const relay = { isAvailable: vi.fn().mockReturnValue(true) };
+    const service = new NotificationConsumerService(
+      config,
+      processor as unknown as NotificationProcessorService,
+      {} as RetryExecutor,
+      relay as unknown as EmailSenderService,
+      metrics as unknown as NotificationMetricsService,
+      logger as unknown as JsonLogger
+    );
+    const payload = {
+      batch: {
+        topic: config.kafka.emailDltTopic,
+        partition: 1,
+        messages: [{ offset: '0', value: Buffer.from('{malformed-json') }],
+      },
+      isRunning: () => true,
+      isStale: () => false,
+      resolveOffset: vi.fn(),
+      heartbeat: vi.fn().mockResolvedValue(undefined),
+    } as unknown as EachBatchPayload;
+    const processBatch = (
+      service as unknown as { processBatch: (batch: EachBatchPayload) => Promise<void> }
+    ).processBatch.bind(service);
+
+    await expect(processBatch(payload)).rejects.toThrow('Connection terminated unexpectedly');
+    await expect(processBatch(payload)).rejects.toThrow('Connection terminated unexpectedly');
+
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'notification.record_blocked',
+        topic: config.kafka.emailDltTopic,
+        partition: 1,
+        offset: '0',
+        failures: 2,
+      }),
+      expect.any(String),
+      NotificationConsumerService.name
+    );
+  });
+
+  it('rides out a transient dead-letter publish failure instead of crashing the consumer', async () => {
+    const processor = { process: vi.fn().mockRejectedValue(new Error('Unsupported channel: sms')) };
+    const retryExecutor = {
+      execute: vi.fn(async (operation: () => Promise<unknown>) => operation()),
+    };
+    const relay = { isAvailable: vi.fn().mockReturnValue(true) };
+    kafka.producer.send
+      .mockRejectedValueOnce(new Error('The producer is disconnected'))
+      .mockResolvedValueOnce(undefined);
+    const service = new NotificationConsumerService(
+      config,
+      processor as unknown as NotificationProcessorService,
+      retryExecutor as unknown as RetryExecutor,
+      relay as unknown as EmailSenderService,
+      metrics as unknown as NotificationMetricsService,
+      logger as unknown as JsonLogger
+    );
+    const payload = {
+      batch: {
+        topic: config.kafka.emailTopic,
+        partition: 0,
+        messages: [{ offset: '12', value: Buffer.from('{}') }],
+      },
+      isRunning: () => true,
+      isStale: () => false,
+      resolveOffset: vi.fn(),
+      heartbeat: vi.fn().mockResolvedValue(undefined),
+    } as unknown as EachBatchPayload;
+
+    await (
+      service as unknown as { processBatch: (batch: EachBatchPayload) => Promise<void> }
+    ).processBatch(payload);
+
+    expect(kafka.producer.send).toHaveBeenCalledTimes(2);
+    expect(metrics.deadLetterPublishFailed).toHaveBeenCalledWith('retried');
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'notification.dlt_publish_retry_scheduled',
+        attempt: 1,
+        maxAttempts: 3,
+        delayMs: 10,
+        offset: '12',
+      }),
+      NotificationConsumerService.name
+    );
+    expect(kafka.consumer.commitOffsets).toHaveBeenCalledWith([
+      { topic: config.kafka.emailTopic, partition: 0, offset: '13' },
+    ]);
+  });
+
+  it('says so and keeps the offset when the dead-letter topic stays unreachable', async () => {
+    const processor = { process: vi.fn().mockRejectedValue(new Error('Unsupported channel: sms')) };
+    const retryExecutor = {
+      execute: vi.fn(async (operation: () => Promise<unknown>) => operation()),
+    };
+    const relay = { isAvailable: vi.fn().mockReturnValue(true) };
+    const resolveOffset = vi.fn();
+    kafka.producer.send.mockRejectedValue(new Error('The producer is disconnected'));
+    const service = new NotificationConsumerService(
+      config,
+      processor as unknown as NotificationProcessorService,
+      retryExecutor as unknown as RetryExecutor,
+      relay as unknown as EmailSenderService,
+      metrics as unknown as NotificationMetricsService,
+      logger as unknown as JsonLogger
+    );
+    const payload = {
+      batch: {
+        topic: config.kafka.emailTopic,
+        partition: 0,
+        messages: [{ offset: '12', value: Buffer.from('{}') }],
+      },
+      isRunning: () => true,
+      isStale: () => false,
+      resolveOffset,
+      heartbeat: vi.fn().mockResolvedValue(undefined),
+    } as unknown as EachBatchPayload;
+
+    await expect(
+      (
+        service as unknown as { processBatch: (batch: EachBatchPayload) => Promise<void> }
+      ).processBatch(payload)
+    ).rejects.toThrow('The producer is disconnected');
+
+    expect(kafka.producer.send).toHaveBeenCalledTimes(3);
+    expect(metrics.deadLetterPublishFailed).toHaveBeenCalledWith('exhausted');
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: 'notification.dlt_publish_exhausted',
+        attempts: 3,
+        offset: '12',
+      }),
+      expect.any(String),
+      NotificationConsumerService.name
+    );
+    expect(resolveOffset).not.toHaveBeenCalled();
+    expect(kafka.consumer.commitOffsets).not.toHaveBeenCalled();
+  });
+
   beforeEach(() => {
     kafka.handlers.clear();
+    kafka.producer.send.mockReset();
+    kafka.consumer.commitOffsets.mockReset();
+    kafka.consumer.pause.mockReset();
+    metrics = { deadLetterPublishFailed: vi.fn() };
     logger = {
       error: vi.fn(),
       log: vi.fn(),
@@ -274,6 +429,7 @@ describe('NotificationConsumerService lifecycle', () => {
       {} as NotificationProcessorService,
       {} as RetryExecutor,
       { isAvailable: () => true } as EmailSenderService,
+      metrics as unknown as NotificationMetricsService,
       logger as unknown as JsonLogger
     );
   });

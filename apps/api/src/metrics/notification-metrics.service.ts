@@ -3,6 +3,10 @@ import { Counter, Histogram, Registry } from 'prom-client';
 
 const UNPARSEABLE_LABELS = { source_app: 'unknown', template_id: 'unknown' } as const;
 
+const DEAD_LETTER_PUBLISH_OUTCOMES = ['retried', 'exhausted'] as const;
+
+export type DeadLetterPublishOutcome = (typeof DEAD_LETTER_PUBLISH_OUTCOMES)[number];
+
 @Injectable()
 export class NotificationMetricsService {
   readonly registry: Registry;
@@ -11,6 +15,7 @@ export class NotificationMetricsService {
   private readonly failedCounter: Counter<'source_app' | 'template_id'>;
   private readonly deduplicatedCounter: Counter<'source_app' | 'template_id'>;
   private readonly deadLetterCounter: Counter<'source_app' | 'template_id'>;
+  private readonly deadLetterPublishFailureCounter: Counter<'outcome'>;
   private readonly renderDurationHistogram: Histogram<'template_id'>;
   private readonly sendDurationHistogram: Histogram<'provider' | 'template_id'>;
   private readonly deliveryDurationHistogram: Histogram<'source_app' | 'template_id'>;
@@ -56,6 +61,12 @@ export class NotificationMetricsService {
       labelNames: ['source_app', 'template_id'],
       registers: [this.registry],
     });
+    this.deadLetterPublishFailureCounter = new Counter({
+      name: 'notifications_dlq_publish_failures_total',
+      help: 'Failed attempts to publish a failed notification onto the dead-letter topic.',
+      labelNames: ['outcome'],
+      registers: [this.registry],
+    });
     this.renderDurationHistogram = new Histogram({
       name: 'notification_render_duration_seconds',
       help: 'Time spent rendering a notification template.',
@@ -95,6 +106,9 @@ export class NotificationMetricsService {
       this.deliveryDurationHistogram.zero(labels);
     }
     this.deadLetterCounter.inc(UNPARSEABLE_LABELS, 0);
+    for (const outcome of DEAD_LETTER_PUBLISH_OUTCOMES) {
+      this.deadLetterPublishFailureCounter.inc({ outcome }, 0);
+    }
   }
 
   received(sourceApp: string, templateId: string): void {
@@ -134,6 +148,10 @@ export class NotificationMetricsService {
 
   deadLetteredUnparseable(): void {
     this.deadLetterCounter.inc(UNPARSEABLE_LABELS);
+  }
+
+  deadLetterPublishFailed(outcome: DeadLetterPublishOutcome): void {
+    this.deadLetterPublishFailureCounter.inc({ outcome });
   }
 
   renderDuration(templateId: string, durationMs: number): void {
