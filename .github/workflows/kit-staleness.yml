@@ -1,0 +1,32 @@
+name: Kit Staleness
+
+on:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kit-staleness-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUSKY: '0'
+
+jobs:
+  parity:
+    name: Vendored Kit Parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Observability kit parity against the kit's current manifest
+        run: npm run check:kit -- --strict-remote

@@ -52,6 +52,9 @@ jobs:
       - name: Validate formatting
         run: npm run format:check
 
+      - name: Observability kit parity
+        run: npm run check:kit -- --offline
+
       - name: Lint
         run: npm run lint
 
