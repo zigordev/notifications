@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.28](https://github.com/zigordev/notifications/compare/v0.1.27...v0.1.28) (2026-09-24)
+
+
+### Bug Fixes
+
+* **notifications:** tell a dead letter that can never parse from one that failed right now ([#158](https://github.com/zigordev/notifications/issues/158)) ([4d637bc](https://github.com/zigordev/notifications/commit/4d637bcb510bfdbb7315d6a77e1a548a8855c18b))
+
 ## [0.1.27](https://github.com/zigordev/notifications/compare/v0.1.26...v0.1.27) (2026-09-23)
 
 
