@@ -343,7 +343,7 @@ jobs:
                 "if [ -z \"$container\" ]; then echo \"notifications_api is not running\" >&2; exit 1; fi",
                 "body=\"$(docker exec \"$container\" wget -qO- http://127.0.0.1:8080/health)\"",
                 "echo \"$body\"",
-                "printf %s \"$body\" | grep -q \"\\\"status\\\":\\\"ok\\\"\""
+                "grep -q \"\\\"status\\\":\\\"ok\\\"\" <<<\"$body\""
               ]
             }
           }' > "$payload_file"
@@ -352,7 +352,7 @@ jobs:
           echo "SSM command id: $command_id"
 
           status=""
-          for attempt in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             set +e
             status="$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" --query 'Status' --output text 2>/dev/null)"
             rc=$?
