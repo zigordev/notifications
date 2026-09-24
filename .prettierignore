@@ -9,5 +9,6 @@ coverage/
 package-lock.json
 next-env.d.ts
 apps/web/src/lib/api/generated.ts
+observability.kit.json
 _ds_manifest.json
 CHANGELOG.md
