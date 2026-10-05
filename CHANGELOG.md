@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.30](https://github.com/zigordev/notifications/compare/v0.1.29...v0.1.30) (2026-10-05)
+
+
+### Bug Fixes
+
+* **notifications:** clear the high and critical prod audit blockers ([#171](https://github.com/zigordev/notifications/issues/171)) ([f022508](https://github.com/zigordev/notifications/commit/f022508a02293d5820d00988f4d926d6efc2f3ff))
+
 ## [0.1.29](https://github.com/zigordev/notifications/compare/v0.1.28...v0.1.29) (2026-09-24)
 
 
