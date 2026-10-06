@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.31](https://github.com/zigordev/notifications/compare/v0.1.30...v0.1.31) (2026-10-06)
+
+
+### Bug Fixes
+
+* **notifications:** take the patched proxy-addr ([#180](https://github.com/zigordev/notifications/issues/180)) ([9d2c66f](https://github.com/zigordev/notifications/commit/9d2c66fd554376854ac44d287b0b9493c40739e7))
+
 ## [0.1.30](https://github.com/zigordev/notifications/compare/v0.1.29...v0.1.30) (2026-10-05)
 
 
