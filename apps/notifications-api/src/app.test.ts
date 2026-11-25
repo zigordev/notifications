@@ -1,3 +1,6 @@
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createLogger } from '@zigordev/otel';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type App, buildApp } from './app.ts';
@@ -38,7 +41,7 @@ describe('GET /health', () => {
       status: 'error',
       service: 'notifications-api',
       version: '1f3a9c2',
-      components: { db: { status: 'down' } },
+      components: { db: { status: 'down' }, flags: { status: 'up' } },
     });
   });
 
@@ -62,6 +65,29 @@ describe('GET /api/v1/hello', () => {
     await app.inject({ method: 'GET', url: '/api/v1/hello' });
 
     expect(events()).toEqual(['greeting.sent']);
+  });
+  it('greets as a friend once the flag friendly-greeting is on', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'notifications-api-flags-'));
+    const file = join(folder, 'flags.json');
+    const flags = JSON.parse(readFileSync(new URL('../flags.json', import.meta.url), 'utf8'));
+    flags.flags['friendly-greeting'].defaultVariant = 'on';
+    writeFileSync(file, JSON.stringify(flags));
+    await app.close();
+    app = await buildApp({
+      config: readConfig({
+        OTEL_SERVICE_NAME: 'notifications-api',
+        DATABASE_URL: 'postgresql://nobody@127.0.0.1:1/nothing',
+        FLAGS_FILE: file,
+      }),
+      logger: createLogger({
+        service: 'notifications-api',
+        destination: { write: () => undefined },
+      }),
+    });
+
+    const response = await app.inject({ method: 'GET', url: '/api/v1/hello' });
+
+    expect(response.json()).toEqual({ message: 'Hi there, from notifications-api' });
   });
 });
 

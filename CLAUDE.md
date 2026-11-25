@@ -4,17 +4,17 @@ The notifications service of the zigordev platform: one service that will delive
 
 ## Where things live
 
-| Path                                      | What it holds                                                                                                       |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `apps/notifications-api`                  | The API on `@zigordev/api`: the greeting and the notes, its migrations in `drizzle/`, its `openapi.json`, its image |
-| `packages/notifications-api-client`       | The API's typed client, written from `openapi.json`                                                                 |
-| `packages/notifications-client-generator` | The one package that writes those types, on its own TypeScript 5.9.3                                                |
-| `compose.yaml`                            | The product as it runs everywhere. `compose.local.yaml` and `compose.production.yaml` hold only the differences     |
-| `compose.test.ts`                         | The test that holds the compose files and the Dockerfile to the container rules                                     |
-| `.env.production.example`                 | The names of production's secrets. The values live in Parameter Store under `/notifications/<NAME>`                 |
-| `.github/workflows/ci.yml`                | The caller of toolkit's pipeline and publish workflows, pinned to one commit of toolkit                             |
-| `.claude/`                                | The shared rules, skills, hooks and permissions. `zigordev sync` writes them                                        |
-| `docs/`                                   | The standard docs and the decision records                                                                          |
+| Path                                      | What it holds                                                                                                                                  |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/notifications-api`                  | The API on `@zigordev/api`: the greeting and the notes, its flags in `flags.json`, its migrations in `drizzle/`, its `openapi.json`, its image |
+| `packages/notifications-api-client`       | The API's typed client, written from `openapi.json`                                                                                            |
+| `packages/notifications-client-generator` | The one package that writes those types, on its own TypeScript 5.9.3                                                                           |
+| `compose.yaml`                            | The product as it runs everywhere. `compose.local.yaml` and `compose.production.yaml` hold only the differences                                |
+| `compose.test.ts`                         | The test that holds the compose files and the Dockerfile to the container rules                                                                |
+| `.env.production.example`                 | The names of production's secrets. The values live in Parameter Store under `/notifications/<NAME>`                                            |
+| `.github/workflows/ci.yml`                | The caller of toolkit's pipeline and publish workflows, pinned to one commit of toolkit                                                        |
+| `.claude/`                                | The shared rules, skills, hooks and permissions. `zigordev sync` writes them                                                                   |
+| `docs/`                                   | The standard docs and the decision records                                                                                                     |
 
 ## Commands
 

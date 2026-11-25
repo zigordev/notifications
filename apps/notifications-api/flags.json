@@ -1,0 +1,11 @@
+{
+  "$schema": "https://flagd.dev/schema/v0/flags.json",
+  "flags": {
+    "friendly-greeting": {
+      "state": "ENABLED",
+      "variants": { "on": true, "off": false },
+      "defaultVariant": "off",
+      "metadata": { "removeBy": "2027-11-30" }
+    }
+  }
+}

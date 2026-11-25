@@ -2,25 +2,25 @@
 
 The notifications service of the zigordev platform. Every product will send its email through it: a product sends a request event over Kafka, and the service answers with an outcome event, sent or failed. toolkit's [record 0042](https://github.com/zigordev/toolkit/blob/main/docs/adr/0042-notifications-takes-requests-and-gives-outcomes-over-kafka.md) holds that decision.
 
-Today the repo holds its starting point, step 5.1 of the Build plan: the API half of toolkit's product template, made on 2026-11-25 from [toolkit](https://github.com/zigordev/toolkit) at version 1.25.0. It is an API on its own PostgreSQL, with its migrate job, its typed client and the client's generator. The service itself arrives in the next steps, and replaces the template's example feature.
+Today the repo holds its starting point, step 5.1 of the Build plan: the API half of toolkit's product template. It was made on 2026-11-25 from [toolkit](https://github.com/zigordev/toolkit) at version 1.25.0, and took the template's flag slice from version 1.26.0 the same day. It is an API on its own PostgreSQL, with its migrate job, its typed client and the client's generator. The service itself arrives in the next steps, and replaces the template's example feature.
 
 ## What it is
 
 A product on the platform is an API and, most of the time, a web app. A service that sends email has no pages, so this repo took the template's API half and left the web app out.
 
-| Path                                      | What it holds                                                                                                                                      |
-| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/notifications-api`                  | The API: a Fastify service on `@zigordev/api` with a greeting and the notes, its migrations in `drizzle/`, its `openapi.json` and its `Dockerfile` |
-| `packages/notifications-api-client`       | The API's typed client: the types written from `openapi.json`, and `createNotificationsApiClient()` on openapi-fetch                               |
-| `packages/notifications-client-generator` | The one package that writes those types, with openapi-typescript on its own TypeScript 5.9.3                                                       |
-| `compose.yaml`                            | The whole product as it runs everywhere: the API, its migrate job and the product's PostgreSQL, each with its limits and health check              |
-| `compose.local.yaml`                      | What differs on the laptop: the image is built here, the address is `notifications.localhost`, and PostgreSQL answers on `127.0.0.1:5435`          |
-| `compose.production.yaml`                 | What differs in production: the address, and that the deploy runs the migrate job itself                                                           |
-| `compose.test.ts`                         | The test that holds the three compose files and the Dockerfile to the container rules                                                              |
-| `package.json`                            | The scripts of every repo, and `local:up`, `local:down`, `local:reset`, `dev` and `check:contract`                                                 |
-| `.env.production.example`                 | The names of the secrets that production needs. Only the names: the values live in AWS Parameter Store                                             |
-| `.github/workflows/ci.yml`                | The repo's caller: the pipeline on every pull request, then publish on every merge to `main`                                                       |
-| `docs/`                                   | How to start it on a clean laptop, how it reaches production, what a user can do, and the decisions about this repo                                |
+| Path                                      | What it holds                                                                                                                                                                                       |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/notifications-api`                  | The API: a Fastify service on `@zigordev/api` with a greeting behind a feature flag and the notes, its flags in `flags.json`, its migrations in `drizzle/`, its `openapi.json` and its `Dockerfile` |
+| `packages/notifications-api-client`       | The API's typed client: the types written from `openapi.json`, and `createNotificationsApiClient()` on openapi-fetch                                                                                |
+| `packages/notifications-client-generator` | The one package that writes those types, with openapi-typescript on its own TypeScript 5.9.3                                                                                                        |
+| `compose.yaml`                            | The whole product as it runs everywhere: the API, its migrate job and the product's PostgreSQL, each with its limits and health check                                                               |
+| `compose.local.yaml`                      | What differs on the laptop: the image is built here, the address is `notifications.localhost`, and PostgreSQL answers on `127.0.0.1:5435`                                                           |
+| `compose.production.yaml`                 | What differs in production: the address, and that the deploy runs the migrate job itself                                                                                                            |
+| `compose.test.ts`                         | The test that holds the three compose files and the Dockerfile to the container rules                                                                                                               |
+| `package.json`                            | The scripts of every repo, and `local:up`, `local:down`, `local:reset`, `dev` and `check:contract`                                                                                                  |
+| `.env.production.example`                 | The names of the secrets that production needs. Only the names: the values live in AWS Parameter Store                                                                                              |
+| `.github/workflows/ci.yml`                | The repo's caller: the pipeline on every pull request, then publish on every merge to `main`                                                                                                        |
+| `docs/`                                   | How to start it on a clean laptop, how it reaches production, what a user can do, and the decisions about this repo                                                                                 |
 
 Its product name is `notifications`, so its app is `notifications-api`. An app has one name, in its folder, its package, its compose service, its image and its telemetry.
 
@@ -39,6 +39,7 @@ It is also the first real service through the whole pipeline, so it proves the s
 | `@zigordev/config` | Reads the API's settings from the environment once, and stops it when one is wrong                       |
 | `@zigordev/otel`   | The API's traces, metrics and log lines, and the answer of its health route                              |
 | `@zigordev/api`    | The API's base: the error format, paging, sign-in checks, the OpenAPI pages, the database and the stop   |
+| `@zigordev/flags`  | The API's feature flags, read from its own `flags.json` through OpenFeature, with no flag server         |
 | PostgreSQL 18      | The product's database, in a container of its own on a network of its own                                |
 | Drizzle            | The API's queries, and with drizzle-kit the SQL of each migration                                        |
 | `@zigordev/test`   | A real PostgreSQL for the tests, with one migrated copy per test file                                    |
@@ -62,12 +63,12 @@ pnpm local:up
 
 The script has two halves. `zigordev-stack up` starts the shared services and waits until each one is healthy. When they already run, it changes nothing. `docker compose up` then builds the API's image, starts PostgreSQL, runs the migrate job once, starts the API, and returns when it is healthy. The first build takes a few minutes, most of them downloads.
 
-| Address                                       | Answers                                                                             |
-| --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `http://notifications.localhost/api/v1/hello` | The API: `{"message":"Hello from notifications-api"}`                               |
-| `http://notifications.localhost/health`       | The API's health: its name, the version that runs, and whether its database is up   |
-| `http://notifications.localhost/api/v1/docs`  | The API's OpenAPI pages, with every request and every error                         |
-| `http://grafana.localhost`                    | Grafana. The dashboard named App, in the folder zigordev, lists `notifications-api` |
+| Address                                       | Answers                                                                                          |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `http://notifications.localhost/api/v1/hello` | The API: `{"message":"Hello from notifications-api"}`                                            |
+| `http://notifications.localhost/health`       | The API's health: its name, the version that runs, and whether its database and its flags are up |
+| `http://notifications.localhost/api/v1/docs`  | The API's OpenAPI pages, with every request and every error                                      |
+| `http://grafana.localhost`                    | Grafana. The dashboard named App, in the folder zigordev, lists `notifications-api`              |
 
 `pnpm local:down` stops and removes the product's containers, and leaves the shared services running, because other products use them. `pnpm local:reset` does the same, removes the product's volumes, and starts it again.
 
@@ -98,18 +99,19 @@ The shared services publish the agent's port on this Mac from `@zigordev/stack` 
 
 ## The settings
 
-| Variable                      | Read by          | What it holds                                                                | When it is not set                      |
-| ----------------------------- | ---------------- | ---------------------------------------------------------------------------- | --------------------------------------- |
-| `OTEL_SERVICE_NAME`           | The API, the job | The app's one name                                                           | The app does not start                  |
-| `OTEL_SERVICE_VERSION`        | The API, the job | The version that runs, shown in its logs, traces and metrics                 | It is left out                          |
-| `LOG_LEVEL`                   | The API, the job | `debug`, `info`, `warn` or `error`                                           | `info`                                  |
-| `PORT`                        | The API          | The port it listens on                                                       | 3000                                    |
-| `HOST`                        | The API          | The address it listens on                                                    | `0.0.0.0`, every one                    |
-| `DATABASE_URL`                | The API, the job | The address of the app's database, as its own role                           | The app does not start                  |
-| `API_KEYS`                    | The API          | The callers it knows, as JSON: a name, the SHA-256 of the key and the scopes | Nobody, so every notes request gets 401 |
-| `DATABASE_ADMIN_URL`          | The job          | The superuser's address, to make the app's role and database                 | The job only migrates                   |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OpenTelemetry    | Where the telemetry goes. The compose file names the agent                   | `http://localhost:4318`                 |
-| `OTEL_RESOURCE_ATTRIBUTES`    | OpenTelemetry    | The environment the app runs in, as `local` or `production`                  | It is left out                          |
+| Variable                      | Read by          | What it holds                                                                | When it is not set                              |
+| ----------------------------- | ---------------- | ---------------------------------------------------------------------------- | ----------------------------------------------- |
+| `OTEL_SERVICE_NAME`           | The API, the job | The app's one name                                                           | The app does not start                          |
+| `OTEL_SERVICE_VERSION`        | The API, the job | The version that runs, shown in its logs, traces and metrics                 | It is left out                                  |
+| `LOG_LEVEL`                   | The API, the job | `debug`, `info`, `warn` or `error`                                           | `info`                                          |
+| `PORT`                        | The API          | The port it listens on                                                       | 3000                                            |
+| `HOST`                        | The API          | The address it listens on                                                    | `0.0.0.0`, every one                            |
+| `DATABASE_URL`                | The API, the job | The address of the app's database, as its own role                           | The app does not start                          |
+| `API_KEYS`                    | The API          | The callers it knows, as JSON: a name, the SHA-256 of the key and the scopes | Nobody, so every notes request gets 401         |
+| `FLAGS_FILE`                  | The API          | The path of its flags file                                                   | Its own `flags.json`, beside its `package.json` |
+| `DATABASE_ADMIN_URL`          | The job          | The superuser's address, to make the app's role and database                 | The job only migrates                           |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OpenTelemetry    | Where the telemetry goes. The compose file names the agent                   | `http://localhost:4318`                         |
+| `OTEL_RESOURCE_ATTRIBUTES`    | OpenTelemetry    | The environment the app runs in, as `local` or `production`                  | It is left out                                  |
 
 The compose files set every one of them that a container needs. The API reads nothing but environment variables.
 
@@ -166,6 +168,16 @@ const { data, error } = await api.GET('/api/v1/notes', { params: { query: { stat
 After a change to `openapi.json`, write the types again with `pnpm --dir packages/notifications-api-client run generate`. A test fails while they differ from the file. The generator runs on TypeScript 5.9.3, because openapi-typescript does not run on TypeScript 7. toolkit's [record 0036](https://github.com/zigordev/toolkit/blob/main/docs/adr/0036-the-client-generator-runs-on-its-own-typescript-5.md) says why, and when that ends.
 
 Products will not call the service over HTTP: record 0042 gives them a package of typed events instead, published from this repo. The client stays while the template's API does, and goes when that package arrives.
+
+## The feature flags
+
+The API keeps its flags in `apps/notifications-api/flags.json`, and reads them in the app through [`@zigordev/flags`](https://github.com/zigordev/toolkit/blob/main/packages/flags/README.md). Its image carries the file, so a flag changes through a pull request and takes effect with the deploy. No flag server runs.
+
+It has the template's one flag, `friendly-greeting`, and it is off. `GET /api/v1/hello` answers `Hello from notifications-api` while it is off, and `Hi there, from notifications-api` once a pull request sets its `defaultVariant` to `on`. It is the smallest example of a feature that ships switched off, and it goes with the greeting when the service replaces it.
+
+Every flag carries a removal date in `metadata.removeBy`. The `flags` rule of `zigordev check` fails `pnpm check` on a flag past its date, so `friendly-greeting` has to go, or its date has to move, by 2027-11-30.
+
+A test sets a flag by pointing `FLAGS_FILE` at a file of its own, as the API's `app.test.ts` does for the friendly greeting.
 
 ## How the API starts
 
@@ -239,4 +251,4 @@ Phase 5 of the Build plan builds the rest, each step as its own pull requests:
 - **Production:** the Deploy job, and a real email sent from a merge with no manual step.
 - **Its runbooks and alerts:** delivery failures, and mail that is stuck.
 
-The template's flag slice is not here yet. It reads its flags through `@zigordev/flags`, which has no released version on npm yet, only the empty 0.0.0 of its first publish. So it arrives in its own pull request once a real version is out. Each later slice of the template that a service needs arrives the same way: one pull request that copies it in.
+Each later slice of the template that the service needs arrives as one pull request that copies it in, as the flag slice did on 2026-11-25.

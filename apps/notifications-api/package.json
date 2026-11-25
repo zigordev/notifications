@@ -11,6 +11,7 @@
   "files": [
     "src",
     "drizzle",
+    "flags.json",
     "!src/**/*.test.ts"
   ],
   "scripts": {
@@ -22,9 +23,12 @@
     "openapi": "node src/openapi.ts"
   },
   "dependencies": {
+    "@grpc/grpc-js": "catalog:",
+    "@openfeature/server-sdk": "catalog:",
     "@opentelemetry/api": "catalog:",
     "@zigordev/api": "catalog:",
     "@zigordev/config": "catalog:",
+    "@zigordev/flags": "catalog:",
     "@zigordev/otel": "catalog:",
     "drizzle-orm": "catalog:",
     "fastify": "catalog:",

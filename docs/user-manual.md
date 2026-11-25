@@ -6,16 +6,16 @@ The users of notifications are the other products: each one will hand it an emai
 
 A caller signs in with an API key in `Authorization: Bearer <key>`. Each key has scopes: `notes:read` to read, and `notes:write` to change. The keys' digests live in the setting `API_KEYS`, and in production in the secret `NOTIFICATIONS_API_KEYS`, which the owner sets.
 
-| Flow                     | Request                         | Answer                                                                                         |
-| ------------------------ | ------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Ask whether it is well   | `GET /health`                   | JSON with `status`, the service's name, the `version` that runs, and the state of its database |
-| Read the greeting        | `GET /api/v1/hello`             | 200 with a message, with no key                                                                |
-| List notes               | `GET /api/v1/notes`             | 200 with a page of notes, filtered by `status` and `q`, sorted and paged                       |
-| Write a note             | `POST /api/v1/notes`            | 201 with the note and its `Location`                                                           |
-| Read one note            | `GET /api/v1/notes/{noteId}`    | 200 with the note, or 404                                                                      |
-| Change a note            | `PATCH /api/v1/notes/{noteId}`  | 200 with the changed note, or 404                                                              |
-| Delete a note            | `DELETE /api/v1/notes/{noteId}` | 204, or 404                                                                                    |
-| Read the API's own pages | `GET /api/v1/docs`              | The OpenAPI pages, with every request and every error                                          |
+| Flow                     | Request                         | Answer                                                                                                       |
+| ------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Ask whether it is well   | `GET /health`                   | JSON with `status`, the service's name, the `version` that runs, and the state of its database and its flags |
+| Read the greeting        | `GET /api/v1/hello`             | 200 with a message, with no key. The flag `friendly-greeting` picks its words                                |
+| List notes               | `GET /api/v1/notes`             | 200 with a page of notes, filtered by `status` and `q`, sorted and paged                                     |
+| Write a note             | `POST /api/v1/notes`            | 201 with the note and its `Location`                                                                         |
+| Read one note            | `GET /api/v1/notes/{noteId}`    | 200 with the note, or 404                                                                                    |
+| Change a note            | `PATCH /api/v1/notes/{noteId}`  | 200 with the changed note, or 404                                                                            |
+| Delete a note            | `DELETE /api/v1/notes/{noteId}` | 204, or 404                                                                                                  |
+| Read the API's own pages | `GET /api/v1/docs`              | The OpenAPI pages, with every request and every error                                                        |
 
 Every error is a problem in the platform's format: `type`, `title`, `status`, `detail`, `instance`, and a stable `code` with its `params`. The [README](../README.md) shows how to make a key on the laptop.
 
@@ -30,4 +30,4 @@ toolkit's [record 0042](https://github.com/zigordev/toolkit/blob/main/docs/adr/0
 
 ## Critical paths
 
-The health route is the critical path today: the deploy and the platform's checks read it. It is tested on its own, as part of the API's routes on a real PostgreSQL, and in the API run as a real process.
+The health route is the critical path today: the deploy and the platform's checks read it. It reports the database and the flags. It is tested on its own, as part of the API's routes on a real PostgreSQL, and in the API run as a real process.

@@ -38,10 +38,11 @@ The service adds its own needs in the steps that build it: the mail password, it
 
 ## Looking after it
 
-| You want to                       | Do this                                                                                              |
-| --------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| See what a merge published        | Open the run of the merge on GitHub. Publish names the image and its digest                          |
-| Know which version runs           | Once deployed, open <https://notifications.zigordev.com/health>. `version` is the commit             |
-| Read the logs, traces and metrics | Once deployed, Grafana Cloud, under the services `notifications-api` and `notifications-api-migrate` |
-| Undo a bad version                | Once deployed, revert its pull request: the revert deploys like any merge                            |
-| Run a deploy by hand              | Only with the owner's yes                                                                            |
+| You want to                       | Do this                                                                                                                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| See what a merge published        | Open the run of the merge on GitHub. Publish names the image and its digest                                                                           |
+| Know which version runs           | Once deployed, open <https://notifications.zigordev.com/health>. `version` is the commit                                                              |
+| Read the logs, traces and metrics | Once deployed, Grafana Cloud, under the services `notifications-api` and `notifications-api-migrate`                                                  |
+| Undo a bad version                | Once deployed, revert its pull request: the revert deploys like any merge                                                                             |
+| Switch a flag                     | Change it in `apps/notifications-api/flags.json` in a pull request. The image carries the file, so the change goes live with the deploy of that merge |
+| Run a deploy by hand              | Only with the owner's yes                                                                                                                             |
