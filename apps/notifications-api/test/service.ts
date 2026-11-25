@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createTopics } from '@zigordev/events/testing';
 import { createLogger } from '@zigordev/otel';
 import { type CapturedLogs, captureLogs } from '@zigordev/test/app';
 import type { KafkaAccess } from '@zigordev/test/kafka';
@@ -9,7 +10,6 @@ import pg from 'pg';
 import { type App, buildApp, type WorkOverrides } from '../src/app.ts';
 import { readConfig } from '../src/config.ts';
 import type { ProducerEntry } from '../src/producers.ts';
-import { createTopics } from './kafka.ts';
 import { waitFor } from './wait.ts';
 
 export function uniqueApp(prefix: string): string {
@@ -18,7 +18,7 @@ export function uniqueApp(prefix: string): string {
 
 export async function createProducerTopics(kafka: KafkaAccess, apps: readonly string[]) {
   await createTopics(
-    kafka,
+    { clientId: 'notifications-test', ...kafka },
     apps.flatMap((app) => [
       `notifications.requests.${app}`,
       `notifications.requests.${app}.dead-letter`,

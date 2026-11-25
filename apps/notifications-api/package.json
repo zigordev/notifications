@@ -41,7 +41,6 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@platformatic/kafka": "catalog:",
     "@types/node": "catalog:",
     "@types/nodemailer": "catalog:",
     "@types/pg": "catalog:",
