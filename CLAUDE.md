@@ -33,7 +33,7 @@ The notifications service of the zigordev platform: one service that delivers th
 ## Rules of this repo
 
 - The repo keeps the shape of the template's API half, without the HTTP client: products reach the service only through Kafka. A slice of the template that the service needs arrives as one pull request that copies it in, and a change that the template should have too goes to toolkit first.
-- Kafka is reached only through `@zigordev/events`. The one exception is `apps/notifications-api/test/kafka.ts`, which makes the tests' topics until `@zigordev/test` can.
+- Kafka is reached only through `@zigordev/events`, in the tests too: `@zigordev/events/testing` makes the topics a test needs.
 - A change to an event that a reader of its version would not understand is a new version of the event, in `packages/notifications-events`, read beside the old one.
 - A new app that sends email is a line in `producers.json`, after `platform` has its Kafka user, its topics and their access rules.
 - Never log, count or trace an address, a subject or a body. Log the email's id, the request's id and the producer.
