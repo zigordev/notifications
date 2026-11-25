@@ -283,7 +283,7 @@ describe('notifications-api and the services it uses', () => {
   });
 
   it('signs in to Kafka with a throwaway password on the laptop, and with its secret in production', () => {
-    expect(laptop.services[api]?.environment?.KAFKA_PASSWORD).toBe('local-only');
+    expect(laptop.services[api]?.environment?.KAFKA_PASSWORD).toBe('local-only-notifications-api');
     expect(production.services[api]?.environment?.KAFKA_PASSWORD).toBe('');
   });
 

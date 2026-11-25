@@ -52,7 +52,7 @@ This page takes a laptop with nothing installed to notifications running in cont
 
 The broker comes from `@zigordev/stack`, like the other shared services. Until the stack has it, the service starts with Kafka down: `/health` answers `degraded` with `kafka` down, and no request arrives. Everything else works, and the tests use a broker of their own.
 
-In its container the service reaches the broker at `kafka:9092`, as the user `notifications-api` with the throwaway password `local-only`. Mail goes to the stack's Mailpit at `mailpit:1025`, with no sign-in.
+In its container the service reaches the broker at `kafka:9092`, on the network `zigordev`, as the user `notifications-api` with the throwaway password `local-only-notifications-api`, the one that `platform`'s stack gives that user. Mail goes to the stack's Mailpit at `mailpit:1025`, with no sign-in.
 
 ## Edit with hot reload
 
@@ -62,7 +62,7 @@ With the product up in containers, run the service on this Mac itself:
 pnpm dev api
 ```
 
-It runs under `node --watch`, at `http://127.0.0.1:3000`, with the settings of `apps/notifications-api/.env.development`. Those settings expect the broker at `127.0.0.1:9092` and Mailpit's SMTP at `127.0.0.1:1025`. The stack does not publish either on this Mac yet, so the dev service reports both down until it does.
+It runs under `node --watch`, at `http://127.0.0.1:3000`, with the settings of `apps/notifications-api/.env.development`. Those settings reach the broker at `localhost:9094`, the address the stack's broker will give processes on this Mac, and Mailpit's SMTP at `127.0.0.1:1025`. Until the stack has the broker and publishes Mailpit's SMTP port on this Mac, the dev service reports both down.
 
 ## When something does not work
 
