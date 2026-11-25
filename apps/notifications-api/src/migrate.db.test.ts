@@ -47,7 +47,7 @@ describe('the migrate job', () => {
 
     expect(code).toBe(0);
     expect(logs.find('migration.finished')).toEqual([
-      expect.objectContaining({ applied: 3, total: 3 }),
+      expect.objectContaining({ applied: 4, total: 4 }),
     ]);
     expect(logs.events().at(-1)).toBe('migration.queues_ready');
     const url = address(name, password, name);
