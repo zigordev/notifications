@@ -14,7 +14,7 @@ The notifications service of the zigordev platform: one service that delivers th
 | `compose.yaml`                        | The product as it runs everywhere. `compose.local.yaml` and `compose.production.yaml` hold only the differences                       |
 | `compose.test.ts`                     | The test that holds the compose files and the Dockerfile to the container rules                                                       |
 | `.env.production.example`             | The names of production's secrets. The values live in Parameter Store under `/notifications/<NAME>`                                   |
-| `.github/workflows/ci.yml`            | The caller of toolkit's pipeline and publish workflows, pinned to one commit of toolkit                                               |
+| `.github/workflows/ci.yml`            | The caller of toolkit's pipeline, publish and release workflows, pinned to one commit of toolkit                                      |
 | `.claude/`                            | The shared rules, skills, hooks and permissions. `zigordev sync` writes them                                                          |
 | `docs/`                               | The standard docs and the decision records                                                                                            |
 
@@ -27,6 +27,7 @@ The notifications service of the zigordev platform: one service that delivers th
 - `pnpm dev api` runs the service on this Mac with hot reload, beside the containers.
 - `pnpm check:contract` builds the image and holds it, and the compose files, to the platform contract.
 - `pnpm --dir apps/notifications-api run db:generate --name <change>` writes the SQL of a change to the schema. `run openapi` rewrites its `openapi.json`.
+- `pnpm --dir packages/notifications-events run contract` rewrites `events.json`, the committed contract of the events, after a change to one.
 - `pnpm exec zigordev check` runs the rules a machine can check, and `pnpm exec zigordev sync` copies the shared files again.
 
 ## Rules of this repo

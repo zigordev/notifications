@@ -47,3 +47,12 @@ jobs:
       packages: write
       id-token: write
       attestations: write
+
+  release:
+    name: Release
+    needs: [check]
+    if: github.event_name == 'push'
+    uses: zigordev/toolkit/.github/workflows/release.yml@101fea74ca0b802feddd493723ab9e5fea4b0df5 # v1.26.0
+    permissions:
+      contents: write
+      id-token: write
