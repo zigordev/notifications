@@ -23,6 +23,8 @@ An app needs four things, once. The first three are code in `platform`, and the 
 
 The first sender is the one the service uses when a request names none.
 
+Today the file names one app: `template-api`, the API of toolkit's product template, which sends sign-in's emails from `no-reply@zigordev.com`. The template runs only on the laptop, so `platform` gives it its Kafka user and its rules there alone. Its four topics exist on every broker, the production one too, because the service reads the request topic of every app in this file, and a single missing topic stops it reading any of them.
+
 ## Send an email
 
 Add the package of events beside `@zigordev/events`, and render the email with `@zigordev/email`. Write the request into the app's outbox, in the same transaction as the change it belongs to:

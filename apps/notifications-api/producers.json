@@ -1,3 +1,3 @@
 {
-  "producers": []
+  "producers": [{ "app": "template-api", "senders": ["no-reply@zigordev.com"] }]
 }

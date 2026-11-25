@@ -15,11 +15,17 @@ function file(content: string): string {
 const shop = { app: 'shop-api', senders: ['shop@zigordev.test', 'help@zigordev.test'] };
 
 describe('readProducers', () => {
-  it('reads the committed file, which names no producer yet', () => {
+  it('reads the committed file, which names the API of the product template', () => {
     const producers = readProducers(fileURLToPath(new URL('../producers.json', import.meta.url)));
 
-    expect(producers.all).toEqual([]);
-    expect(producers.requestTopics).toEqual([]);
+    expect(producers.all).toEqual([
+      {
+        app: 'template-api',
+        senders: ['no-reply@zigordev.com'],
+        requestTopic: 'notifications.requests.template-api',
+        outcomeTopic: 'notifications.outcomes.template-api',
+      },
+    ]);
   });
 
   it('gives each producer its request topic and its outcome topic', () => {
