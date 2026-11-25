@@ -173,11 +173,10 @@ Nothing personal reaches a log line, a metric or a span: no address, no subject,
 
 ## How it reaches production
 
-On a merge to `main`, Publish builds `ghcr.io/zigordev/notifications-api` for arm64 and attests it, and Release tags the next version and publishes `@zigordev/notifications-events` to npm once it is public. There is no Deploy job yet: it comes with step 5.5, once `platform` has the broker on the host, the SES identity, the deploy target and the secrets. [How it reaches production](docs/cloud-first-deploy.md) lists what each of them needs.
+On a merge to `main`, Publish builds `ghcr.io/zigordev/notifications-api` for arm64 and attests it, and Release tags the next version and publishes `@zigordev/notifications-events` to npm when a merge's title gives one: a `feat` gives a minor version, a `fix` a patch. There is no Deploy job yet: it comes with step 5.5, once `platform` has the broker on the host, the SES identity, the deploy target and the secrets. [How it reaches production](docs/cloud-first-deploy.md) lists what each of them needs.
 
 ## What is left for later
 
-- **The first publish of the package of events:** `@zigordev/notifications-events` is ready and still private. The owner runs `pnpm exec zigordev first-publish @zigordev/notifications-events` once, and a pull request that removes its `"private": true` then lets the Release job publish it, within 2 days.
 - **In `platform`:** the broker in the local bundle and on the host, with the service's Kafka user, each app's topics and their access rules. Then step 5.4: the SES identity for the domain, the mail password and the deploy role.
 - **Step 5.5, production:** the Deploy job, and a real email sent from a merge with no manual step.
 - **Step 5.6, the runbooks and alerts,** in `platform`: delivery failures, and mail that is stuck.
