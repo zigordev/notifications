@@ -132,7 +132,6 @@ The service keeps its state in its own PostgreSQL, `notifications-postgres`, as 
 | `email_attempts` | One row per try: its outcome, the SMTP code, the provider's message id and how long it took                          |
 | `events_outbox`  | The outcome events waiting for the relay, from `@zigordev/events`                                                    |
 | `events_handled` | The ids of the requests already read, kept 30 days, from `@zigordev/events`                                          |
-| `notes`          | The template's example table, left until a migration removes it                                                      |
 | `pgboss.*`       | pg-boss's own schema: the queues `email-deliveries`, `email-dead-letters` and `email-retention`, and the schedule    |
 
 Before the service starts, the one-shot job `notifications-api-migrate` makes the role and the database when they are missing, applies the migrations in `apps/notifications-api/drizzle/`, then installs pg-boss's schema, its three queues and the daily schedule. The service starts pg-boss without changing its schema, and refuses to start when a queue is missing. A change to the tables is a migration: `pnpm --dir apps/notifications-api run db:generate --name <change>` writes its SQL, and the `add-migration` skill holds the steps.
@@ -180,4 +179,3 @@ On a merge to `main`, Publish builds `ghcr.io/zigordev/notifications-api` for ar
 - **In `platform`:** the broker in the local bundle and on the host, with the service's Kafka user, each app's topics and their access rules. Then step 5.4: the SES identity for the domain, the mail password and the deploy role.
 - **Step 5.5, production:** the Deploy job, and a real email sent from a merge with no manual step.
 - **Step 5.6, the runbooks and alerts,** in `platform`: delivery failures, and mail that is stuck.
-- **The `notes` table** of the template goes in a migration of its own, which waits for the owner's label `destructive-migration`.

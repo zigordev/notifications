@@ -1,47 +1,79 @@
-import { keysetOrder } from '@zigordev/api';
+import { randomUUID } from 'node:crypto';
 import { useTestDatabase } from '@zigordev/test/postgres';
-import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import { describe, expect, it } from 'vitest';
-import { notes } from './schema.ts';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const database = useTestDatabase();
+let client: pg.Client;
 
-describe('the notes table', () => {
-  it('serves the default order of the list, newest first, from its index', async () => {
-    const client = new pg.Client({ connectionString: database.url });
-    await client.connect();
-    try {
-      const query = drizzle({ client, casing: 'snake_case' })
-        .select()
-        .from(notes)
-        .orderBy(...keysetOrder([notes.createdAt, notes.id], 'desc'))
-        .limit(21)
-        .toSQL();
-      await client.query('SET enable_seqscan = off');
+beforeAll(async () => {
+  client = new pg.Client({ connectionString: database.url });
+  await client.connect();
+});
 
-      const { rows } = await client.query<{ 'QUERY PLAN': string }>(
-        `EXPLAIN ${query.sql}`,
-        query.params
-      );
+afterAll(async () => {
+  await client.end();
+});
 
-      const plan = rows.map((row) => row['QUERY PLAN']).join('\n');
-      expect(plan).toContain('Index Scan Backward using notes_created_at_id_idx on notes');
-      expect(plan).not.toContain('Sort');
-    } finally {
-      await client.end();
-    }
+function insertEmail(fields: Record<string, string> = {}) {
+  const row = {
+    producer: 'shop-api',
+    request_id: randomUUID(),
+    from_email: 'shop@zigordev.test',
+    to_email: 'ana@example.com',
+    subject: 'Hello',
+    ...fields,
+  };
+  const columns = Object.keys(row);
+  return client.query(
+    `INSERT INTO emails (${columns.join(', ')}) VALUES (${columns.map((_, index) => `$${index + 1}`).join(', ')}) RETURNING id`,
+    Object.values(row)
+  );
+}
+
+describe('the emails table', () => {
+  it('holds one email for each request of a producer', async () => {
+    const requestId = randomUUID();
+    await insertEmail({ request_id: requestId });
+
+    await expect(insertEmail({ request_id: requestId })).rejects.toThrow(
+      /emails_producer_request_id_key/
+    );
+    await expect(
+      insertEmail({ request_id: requestId, producer: 'blog-api' })
+    ).resolves.toMatchObject({ rowCount: 1 });
   });
 
-  it('refuses a status it does not know', async () => {
-    const client = new pg.Client({ connectionString: database.url });
-    await client.connect();
-    try {
-      await expect(
-        client.query("INSERT INTO notes (title, status) VALUES ('x', 'later')")
-      ).rejects.toThrow(/notes_status_known/);
-    } finally {
-      await client.end();
-    }
+  it('refuses a status and a reason it does not know', async () => {
+    await expect(insertEmail({ status: 'bounced' })).rejects.toThrow(/emails_status_known/);
+    await expect(insertEmail({ failure_reason: 'tired' })).rejects.toThrow(
+      /emails_failure_reason_known/
+    );
+  });
+
+  it('refuses an attempt with an outcome it does not know, and drops the attempts with their email', async () => {
+    const { rows } = await insertEmail();
+    const emailId = (rows[0] as { id: string }).id;
+    const attempt = (outcome: string) =>
+      client.query(
+        'INSERT INTO email_attempts (email_id, outcome, provider, duration_ms) VALUES ($1, $2, $3, 1)',
+        [emailId, outcome, 'smtp']
+      );
+
+    await expect(attempt('lost')).rejects.toThrow(/email_attempts_outcome_known/);
+    await attempt('sent');
+    await client.query('DELETE FROM emails WHERE id = $1', [emailId]);
+
+    const left = await client.query(
+      'SELECT count(*)::int AS attempts FROM email_attempts WHERE email_id = $1',
+      [emailId]
+    );
+    expect(left.rows).toEqual([{ attempts: 0 }]);
+  });
+
+  it('holds no table of the template any more', async () => {
+    const { rows } = await client.query("SELECT to_regclass('public.notes') IS NULL AS gone");
+
+    expect(rows).toEqual([{ gone: true }]);
   });
 });

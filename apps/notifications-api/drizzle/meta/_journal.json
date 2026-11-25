@@ -22,6 +22,13 @@
       "when": 1795609782276,
       "tag": "0002_create_emails",
       "breakpoints": false
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795613193597,
+      "tag": "0003_drop_notes",
+      "breakpoints": false
     }
   ]
 }
