@@ -1,0 +1,7 @@
+services:
+  notifications-api:
+    depends_on: !reset []
+    environment:
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=production
+    labels:
+      traefik.http.routers.notifications-api.rule: Host(`notifications.zigordev.com`)

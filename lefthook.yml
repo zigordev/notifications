@@ -1,0 +1,2 @@
+extends:
+  - node_modules/@zigordev/dev/lefthook.yml
