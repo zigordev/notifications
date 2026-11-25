@@ -1,6 +1,6 @@
 # 0003. Delivery carries over November's SMTP path, outcomes and retries
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-25
 - Supersedes: none
 
@@ -9,6 +9,8 @@
 Step 5.2 of the Build plan reads: "November's code, carried over: accepting an email with its safe-retry key, the queue, SMTP delivery, outcomes and retries, and deleting message bodies after 30 days". The owner approved the plan, and the brief of 2026-11-25 for this step repeats it. November's service, in the backup of 2026-11-21, recorded its delivery decisions in its own records, which the owner accepted on 2026-11-19: SMTP for every environment (its 0003), the outcomes and retries (its 0005), and one process that serves and delivers, with a migrate job (its 0006). Its tests reached every outcome against a real Mailpit, whose chaos mode answers chosen SMTP codes. Its `/health` answered 503 while the mail server was down.
 
 The platform has since grown two rules that touch that last point. The contract check, `pnpm check:contract`, starts the product on its own, with no shared service, and needs it healthy. And a part outside the product, such as Kafka in `@zigordev/events`, makes `/health` answer `degraded`, not `error`, because the app still holds its work while that part is away.
+
+The owner accepted this record on 2026-11-25, in their words: "Accept 0003".
 
 The legacy service before November retried mail four times and set it aside when Google revoked its Gmail password, instead of waiting. toolkit's handbook lists pg-boss for background jobs and nodemailer for the notifications service's SMTP.
 
