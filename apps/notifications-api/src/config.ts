@@ -1,4 +1,6 @@
+import { fileURLToPath } from 'node:url';
 import { type Env, loadConfig } from '@zigordev/config';
+import { flagsSettings } from '@zigordev/flags';
 import * as z from 'zod';
 import { apiKeysSchema } from './plugins/api-keys.ts';
 
@@ -13,6 +15,9 @@ const schema = z.object({
   ...service,
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   HOST: z.string().min(1).default('0.0.0.0'),
+  FLAGS_FILE: flagsSettings.FLAGS_FILE.default(
+    fileURLToPath(new URL('../flags.json', import.meta.url))
+  ),
   API_KEYS: z
     .string()
     .default('[]')

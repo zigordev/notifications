@@ -143,7 +143,7 @@ describe('the API as a process', () => {
           status: 'ok',
           service: 'notifications-api',
           version: '1f3a9c2',
-          components: { db: { status: 'up' } },
+          components: { db: { status: 'up' }, flags: { status: 'up' } },
         },
       },
     ]);

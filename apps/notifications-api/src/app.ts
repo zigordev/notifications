@@ -1,4 +1,5 @@
-import { addDatabase, createApi } from '@zigordev/api';
+import { addDatabase, addHealthComponent, createApi } from '@zigordev/api';
+import { startFlags } from '@zigordev/flags';
 import type { Logger } from '@zigordev/otel';
 import type { Config } from './config.ts';
 import { notes as notesTable } from './db/schema.ts';
@@ -29,7 +30,10 @@ export async function buildApp(options: AppOptions) {
     authenticate: apiKeys(config.API_KEYS),
   });
   const db = addDatabase(app, { url: config.DATABASE_URL, schema: { notes: notesTable } });
-  await app.register(hello, { prefix: '/api/v1', service });
+  const flags = await startFlags({ app: service, file: config.FLAGS_FILE });
+  addHealthComponent(app, flags.health);
+  app.addHook('onClose', () => flags.stop());
+  await app.register(hello, { prefix: '/api/v1', service, flags: flags.client });
   await app.register(notes, { prefix: '/api/v1/notes', db });
   await app.ready();
   return app;

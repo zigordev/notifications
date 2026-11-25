@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
 import { ConfigError } from '@zigordev/config';
 import { describe, expect, it } from 'vitest';
@@ -26,6 +27,7 @@ describe('readConfig', () => {
       OTEL_SERVICE_NAME: 'notifications-api',
       DATABASE_URL: database,
       API_KEYS: [],
+      FLAGS_FILE: fileURLToPath(new URL('../flags.json', import.meta.url)),
     });
   });
 
