@@ -1,0 +1,36 @@
+{
+  "name": "@zigordev/notifications-events",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The events of the notifications service: the request an app sends to have an email delivered, the outcome the service sends back, and the topics they travel on",
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@zigordev/events": "^1.26.0",
+    "zod": "^4.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@zigordev/dev": "catalog:",
+    "@zigordev/events": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  }
+}

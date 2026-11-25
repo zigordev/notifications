@@ -9,21 +9,9 @@ describe('the committed OpenAPI file', () => {
     expect(committed).toEqual(JSON.parse(await renderOpenapi()));
   });
 
-  it('describes every endpoint of the notes, each with its operation id', async () => {
-    const document = JSON.parse(await renderOpenapi()) as {
-      paths: Record<string, Record<string, { operationId: string }>>;
-    };
-    const operations = Object.values(document.paths).flatMap((path) =>
-      Object.values(path).map((operation) => operation.operationId)
-    );
+  it('describes no business endpoint, because requests and outcomes travel over Kafka', async () => {
+    const document = JSON.parse(await renderOpenapi()) as { paths?: Record<string, unknown> };
 
-    expect(operations.sort()).toEqual([
-      'createNote',
-      'deleteNote',
-      'getHello',
-      'getNote',
-      'listNotes',
-      'updateNote',
-    ]);
+    expect(document.paths ?? {}).toEqual({});
   });
 });

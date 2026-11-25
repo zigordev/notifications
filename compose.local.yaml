@@ -6,6 +6,7 @@ services:
     environment:
       OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=local
       DATABASE_URL: postgresql://notifications_api:local-only@notifications-postgres:5432/notifications_api
+      KAFKA_PASSWORD: local-only
     labels:
       traefik.http.routers.notifications-api.rule: Host(`notifications.localhost`)
 

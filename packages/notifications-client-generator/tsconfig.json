@@ -1,8 +1,0 @@
-{
-  "extends": "@zigordev/dev/tsconfig/base.json",
-  "compilerOptions": {
-    "noEmit": true,
-    "types": ["node"]
-  },
-  "include": ["generate.ts"]
-}

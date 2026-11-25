@@ -7,7 +7,16 @@ import { readConfig, readMigrateConfig } from './config.ts';
 
 const development = parseEnv(readFileSync(new URL('../.env.development', import.meta.url), 'utf8'));
 const database = 'postgresql://notifications_api@127.0.0.1:5435/notifications_api';
-const digest = 'a'.repeat(64);
+
+const required = {
+  OTEL_SERVICE_NAME: 'notifications-api',
+  DATABASE_URL: database,
+  KAFKA_BROKERS: 'kafka:9092',
+  KAFKA_USERNAME: 'notifications-api',
+  KAFKA_PASSWORD: 'local-only',
+  SMTP_HOST: 'mailpit',
+  SMTP_PORT: '1025',
+};
 
 function issues(read: () => unknown): string[] {
   try {
@@ -19,65 +28,73 @@ function issues(read: () => unknown): string[] {
 }
 
 describe('readConfig', () => {
-  it('needs the name of the service and the database, and fills in the rest', () => {
-    expect(readConfig({ OTEL_SERVICE_NAME: 'notifications-api', DATABASE_URL: database })).toEqual({
+  it('needs the service, its database, Kafka and SMTP, and fills in the rest', () => {
+    expect(readConfig(required)).toEqual({
       PORT: 3000,
       HOST: '0.0.0.0',
       LOG_LEVEL: 'info',
       OTEL_SERVICE_NAME: 'notifications-api',
       DATABASE_URL: database,
-      API_KEYS: [],
+      KAFKA_BROKERS: ['kafka:9092'],
+      KAFKA_USERNAME: 'notifications-api',
+      KAFKA_PASSWORD: 'local-only',
       FLAGS_FILE: fileURLToPath(new URL('../flags.json', import.meta.url)),
+      PRODUCERS_FILE: fileURLToPath(new URL('../producers.json', import.meta.url)),
+      SMTP_HOST: 'mailpit',
+      SMTP_PORT: 1025,
+      SMTP_SECURITY: 'starttls',
+      DELIVERY_RETRY_DELAY_SECONDS: 30,
+      DELIVERY_RETRY_DELAY_MAX_SECONDS: 300,
+      PROVIDER_CHECK_INTERVAL_SECONDS: 30,
+      EMAIL_BODY_RETENTION_DAYS: 30,
     });
   });
 
-  it('reads the API keys as JSON, each with its name, its digest and its scopes', () => {
-    const config = readConfig({
-      OTEL_SERVICE_NAME: 'notifications-api',
-      DATABASE_URL: database,
-      API_KEYS: JSON.stringify([
-        { name: 'notifications-web', sha256: digest, scopes: ['notes:read'] },
-      ]),
-    });
-
-    expect(config.API_KEYS).toEqual([
-      { name: 'notifications-web', sha256: digest, scopes: ['notes:read'] },
+  it('reads several brokers, separated by commas', () => {
+    expect(readConfig({ ...required, KAFKA_BROKERS: 'one:9092, two:9093' }).KAFKA_BROKERS).toEqual([
+      'one:9092',
+      'two:9093',
     ]);
   });
 
-  it('refuses to start without a name, without a database, or with a port that is none', () => {
+  it('takes the sign-in of the mail server when it has both parts', () => {
+    expect(readConfig({ ...required, SMTP_USER: 'user', SMTP_PASSWORD: 'secret' })).toMatchObject({
+      SMTP_USER: 'user',
+      SMTP_PASSWORD: 'secret',
+    });
+  });
+
+  it('refuses to start without what it needs, or with a port that is none', () => {
     expect(issues(() => readConfig({ PORT: '70000' }))).toEqual([
       'OTEL_SERVICE_NAME',
       'DATABASE_URL',
+      'KAFKA_BROKERS',
+      'KAFKA_USERNAME',
+      'KAFKA_PASSWORD',
       'PORT',
+      'SMTP_HOST',
+      'SMTP_PORT',
     ]);
   });
 
   it.each([
-    ['text that is not JSON', 'not json'],
-    [
-      'a key with a scope nobody knows',
-      JSON.stringify([{ name: 'a', sha256: digest, scopes: ['all'] }]),
-    ],
-    ['a digest that is no SHA-256', JSON.stringify([{ name: 'a', sha256: 'abc', scopes: [] }])],
-  ])('refuses API keys given as %s, and names the field', (_name, keys) => {
-    expect(
-      issues(() =>
-        readConfig({
-          OTEL_SERVICE_NAME: 'notifications-api',
-          DATABASE_URL: database,
-          API_KEYS: keys,
-        })
-      )
-    ).toEqual([expect.stringMatching(/^API_KEYS/)]);
+    ['a user without a password', { SMTP_USER: 'user' }],
+    ['a password without a user', { SMTP_PASSWORD: 'secret' }],
+  ])('refuses %s for the mail server', (_name, sign) => {
+    expect(issues(() => readConfig({ ...required, ...sign }))).toEqual(['SMTP_PASSWORD']);
   });
 
-  it('refuses a database address that is not PostgreSQL', () => {
-    expect(
-      issues(() =>
-        readConfig({ OTEL_SERVICE_NAME: 'notifications-api', DATABASE_URL: 'mysql://db/x' })
-      )
-    ).toEqual(['DATABASE_URL']);
+  it.each([
+    ['a database address that is not PostgreSQL', { DATABASE_URL: 'mysql://db/x' }, 'DATABASE_URL'],
+    ['a broker without its port', { KAFKA_BROKERS: 'kafka' }, 'KAFKA_BROKERS.0'],
+    ['a mail server security nobody knows', { SMTP_SECURITY: 'ssl' }, 'SMTP_SECURITY'],
+    [
+      'a retry delay of no seconds',
+      { DELIVERY_RETRY_DELAY_SECONDS: '0' },
+      'DELIVERY_RETRY_DELAY_SECONDS',
+    ],
+  ])('refuses %s', (_name, wrong, variable) => {
+    expect(issues(() => readConfig({ ...required, ...wrong }))).toEqual([variable]);
   });
 
   it('reads the environment of the process when it is given none', () => {
@@ -93,7 +110,7 @@ describe('readMigrateConfig', () => {
         OTEL_SERVICE_NAME: 'notifications-api-migrate',
         DATABASE_URL: database,
         DATABASE_ADMIN_URL: 'postgresql://postgres@127.0.0.1:5435/postgres',
-        API_KEYS: 'not read here',
+        SMTP_HOST: 'not read here',
       })
     ).toEqual({
       LOG_LEVEL: 'info',
@@ -114,6 +131,8 @@ describe('the settings of pnpm dev', () => {
       DATABASE_URL: expect.stringMatching(
         /^postgresql:\/\/notifications_api:[^@]+@127\.0\.0\.1:5435\/notifications_api$/
       ),
+      KAFKA_USERNAME: 'notifications-api',
+      SMTP_SECURITY: 'none',
     });
   });
 

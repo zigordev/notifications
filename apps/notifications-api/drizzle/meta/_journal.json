@@ -15,6 +15,13 @@
       "when": 1795446512340,
       "tag": "0001_add_notes_created_at_index",
       "breakpoints": false
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795609782276,
+      "tag": "0002_create_emails",
+      "breakpoints": false
     }
   ]
 }

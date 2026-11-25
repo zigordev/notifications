@@ -2,8 +2,10 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { migrateDatabase } from '@zigordev/api';
 import { createLogger } from '@zigordev/otel';
+import { kafkaGlobalSetup } from '@zigordev/test/kafka';
 import { postgresGlobalSetup } from '@zigordev/test/postgres';
-import { migrations } from './src/migrate.ts';
+import type { TestProject } from 'vitest/node';
+import { migrateQueues, migrations } from './src/migrate.ts';
 
 function storeImage(): string {
   const model = JSON.parse(
@@ -22,7 +24,7 @@ function storeImage(): string {
 
 export const postgresImage = storeImage();
 
-export const setup = postgresGlobalSetup({
+const postgres = postgresGlobalSetup({
   image: postgresImage,
   prepare: async (url) => {
     await migrateDatabase({
@@ -30,5 +32,13 @@ export const setup = postgresGlobalSetup({
       folder: migrations,
       logger: createLogger({ service: 'notifications-api-migrate', level: 'error' }),
     });
+    await migrateQueues(url);
   },
 });
+
+const kafka = kafkaGlobalSetup();
+
+export async function setup(project: TestProject) {
+  const stops = await Promise.all([postgres(project), kafka(project)]);
+  return () => Promise.all(stops.map((stop) => stop()));
+}

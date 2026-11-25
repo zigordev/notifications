@@ -8,6 +8,9 @@ The decisions that shape the whole platform are not here. They are recorded once
 
 To add one, use the `write-decision-record` skill, or copy [its template](../../.claude/skills/write-decision-record/template.md) to `NNNN-short-title.md` with the next free number, and add a row here in the same pull request.
 
-| #                                                                      | Decision                                               | Date       | Status   |
-| ---------------------------------------------------------------------- | ------------------------------------------------------ | ---------- | -------- |
-| [0001](0001-notifications-starts-from-the-api-half-of-the-template.md) | Notifications starts from the API half of the template | 2026-11-25 | accepted |
+| #                                                                              | Decision                                                         | Date       | Status   |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------- | ---------- | -------- |
+| [0001](0001-notifications-starts-from-the-api-half-of-the-template.md)         | Notifications starts from the API half of the template           | 2026-11-25 | accepted |
+| [0002](0002-requests-and-outcomes-travel-on-topics-named-after-the-service.md) | Requests and outcomes travel on topics named after the service   | 2026-11-25 | proposed |
+| [0003](0003-delivery-carries-over-novembers-smtp-path-outcomes-and-retries.md) | Delivery carries over November's SMTP path, outcomes and retries | 2026-11-25 | proposed |
+| [0004](0004-bodies-are-deleted-30-days-after-an-email-ends.md)                 | Bodies are deleted 30 days after an email ends                   | 2026-11-25 | accepted |

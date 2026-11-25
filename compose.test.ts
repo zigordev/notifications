@@ -270,6 +270,51 @@ describe.each(apps)('%s', (app) => {
   });
 });
 
+describe('notifications-api and the services it uses', () => {
+  const api = 'notifications-api';
+  const development = parseEnv(readFileSync(`${folder}apps/${api}/.env.development`, 'utf8'));
+
+  it('reads its requests from the broker on the shared network, as its own Kafka user', () => {
+    expect(everywhere.services[api]?.environment).toMatchObject({
+      KAFKA_BROKERS: 'kafka:9092',
+      KAFKA_USERNAME: api,
+    });
+    expect(development.KAFKA_USERNAME).toBe(api);
+  });
+
+  it('signs in to Kafka with a throwaway password on the laptop, and with its secret in production', () => {
+    expect(laptop.services[api]?.environment?.KAFKA_PASSWORD).toBe('local-only');
+    expect(production.services[api]?.environment?.KAFKA_PASSWORD).toBe('');
+  });
+
+  it('sends its mail to Mailpit unless told otherwise, with no sign-in, so no copy sends real mail by mistake', () => {
+    for (const from of [everywhere, laptop]) {
+      expect(from.services[api]?.environment).toMatchObject({
+        SMTP_HOST: 'mailpit',
+        SMTP_PORT: '1025',
+        SMTP_SECURITY: 'none',
+      });
+      expect(from.services[api]?.environment?.SMTP_USER).toBeUndefined();
+    }
+  });
+
+  it('sends its mail to Amazon SES in production, over STARTTLS, with the user and password of its secrets', () => {
+    expect(production.services[api]?.environment).toMatchObject({
+      SMTP_HOST: 'email-smtp.eu-west-1.amazonaws.com',
+      SMTP_PORT: '587',
+      SMTP_SECURITY: 'starttls',
+      SMTP_USER: '',
+      SMTP_PASSWORD: '',
+    });
+  });
+
+  it('ships the list of the apps that may send email, beside its flags', () => {
+    const dockerfile = readFileSync(`${folder}apps/${api}/Dockerfile`, 'utf8');
+
+    expect(dockerfile).toContain('COPY --from=build /out/producers.json ./producers.json');
+  });
+});
+
 describe('notifications-api-migrate, the one-shot job', () => {
   const job = everywhere.services['notifications-api-migrate'];
 
@@ -352,7 +397,9 @@ describe('the secrets of production', () => {
 
     expect(Object.keys(example).sort()).toEqual([
       'NOTIFICATIONS_API_DATABASE_PASSWORD',
-      'NOTIFICATIONS_API_KEYS',
+      'NOTIFICATIONS_API_KAFKA_PASSWORD',
+      'NOTIFICATIONS_API_SMTP_PASSWORD',
+      'NOTIFICATIONS_API_SMTP_USER',
       'POSTGRES_PASSWORD',
     ]);
     expect(Object.values(example).every((value) => value === '')).toBe(true);
