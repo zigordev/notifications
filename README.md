@@ -239,4 +239,4 @@ Phase 5 of the Build plan builds the rest, each step as its own pull requests:
 - **Production:** the Deploy job, and a real email sent from a merge with no manual step.
 - **Its runbooks and alerts:** delivery failures, and mail that is stuck.
 
-The template's flag slice is not here yet. It reads its flags through `@zigordev/flags`, which npm does not hold yet, so it arrives in its own pull request once the package is published. Each later slice of the template that a service needs arrives the same way: one pull request that copies it in.
+The template's flag slice is not here yet. It reads its flags through `@zigordev/flags`, which has no released version on npm yet, only the empty 0.0.0 of its first publish. So it arrives in its own pull request once a real version is out. Each later slice of the template that a service needs arrives the same way: one pull request that copies it in.

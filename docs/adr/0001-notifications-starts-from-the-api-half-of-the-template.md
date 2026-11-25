@@ -21,7 +21,7 @@ Step 5.1 of the Build plan reads: "notifications, started from the template's AP
 
 - The repo has the shape, the checks and the pipeline of every product from its first commit. The next steps change only what makes it the notifications service.
 - November's code is carried over into that shape, feature by feature, in step 5.2, instead of being copied in whole.
-- The template's flag slice reads its flags through `@zigordev/flags`, which npm did not hold on 2026-11-25. It arrives in its own pull request once the package is published.
+- The template's flag slice reads its flags through `@zigordev/flags`, which had no released version on npm on 2026-11-25, only the empty 0.0.0 of its first publish. It arrives in its own pull request once a real version is out.
 - A comparison with the template stays easy, because the files keep the template's names, renamed for the product.
 
 ## Alternatives considered
