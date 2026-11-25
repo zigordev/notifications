@@ -1,0 +1,14 @@
+.git
+.github
+.claude
+docs
+**/*.md
+**/*.test.ts
+**/node_modules
+**/.env*
+**/dist
+**/.next
+**/coverage
+**/.DS_Store
+**/*.tsbuildinfo
+**/next-env.d.ts

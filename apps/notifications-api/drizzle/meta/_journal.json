@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795445554364,
+      "tag": "0000_create_notes",
+      "breakpoints": false
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795446512340,
+      "tag": "0001_add_notes_created_at_index",
+      "breakpoints": false
+    }
+  ]
+}

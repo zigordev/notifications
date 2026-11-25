@@ -1,0 +1,21 @@
+services:
+  notifications-api:
+    build:
+      context: .
+      dockerfile: apps/notifications-api/Dockerfile
+    environment:
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=local
+      DATABASE_URL: postgresql://notifications_api:local-only@notifications-postgres:5432/notifications_api
+    labels:
+      traefik.http.routers.notifications-api.rule: Host(`notifications.localhost`)
+
+  notifications-api-migrate:
+    environment:
+      DATABASE_URL: postgresql://notifications_api:local-only@notifications-postgres:5432/notifications_api
+      DATABASE_ADMIN_URL: postgresql://postgres:local-only@notifications-postgres:5432/postgres
+
+  notifications-postgres:
+    environment:
+      POSTGRES_PASSWORD: local-only
+    ports:
+      - 127.0.0.1:5435:5432

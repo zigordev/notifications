@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  pipeline:
+    name: Pipeline
+    uses: zigordev/toolkit/.github/workflows/check.yml@bf14775a18d92309ac2fccace31f5bf65ea3c049 # v1.25.0
+    with:
+      product-folder: .
+    permissions:
+      contents: read
+      security-events: write
+
+  check:
+    name: check
+    needs: [pipeline]
+    if: always()
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Pass only when every job passed
+        env:
+          RESULT: ${{ needs.pipeline.result }}
+        run: |
+          echo "The pipeline ended with: $RESULT"
+          test "$RESULT" = "success"
+
+  publish:
+    name: Publish
+    needs: [check]
+    if: github.event_name == 'push'
+    uses: zigordev/toolkit/.github/workflows/publish.yml@bf14775a18d92309ac2fccace31f5bf65ea3c049 # v1.25.0
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
