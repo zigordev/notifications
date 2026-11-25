@@ -21,6 +21,7 @@ COPY --from=build /out/node_modules ./node_modules
 COPY --from=build /out/src ./src
 COPY --from=build /out/drizzle ./drizzle
 COPY --from=build /out/flags.json ./flags.json
+COPY --from=build /out/producers.json ./producers.json
 USER node
 EXPOSE 3000
 CMD ["node", "--import", "@zigordev/otel/register", "src/main.ts"]

@@ -1,9 +1,16 @@
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { createServer, type Server } from 'node:http';
 import { type AddressInfo, createServer as createTcpServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
+import { requestTopicOf } from '@zigordev/notifications-events';
+import { useKafka } from '@zigordev/test/kafka';
 import { useTestDatabase } from '@zigordev/test/postgres';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { type Mailpit, startMailpit } from '../test/mailpit.ts';
+import { startProduct } from '../test/product.ts';
+import { createProducerTopics, producersFile, uniqueApp } from '../test/service.ts';
+import { waitFor } from '../test/wait.ts';
 
 interface Attribute {
   readonly key: string;
@@ -16,22 +23,39 @@ interface ExportedSpan {
   readonly attributes: readonly Attribute[];
 }
 
+interface DataPoint {
+  readonly asDouble?: number;
+  readonly asInt?: string | number;
+  readonly attributes?: readonly Attribute[];
+}
+
 interface ExportedMetric {
   readonly name: string;
-  readonly sum?: { readonly dataPoints: readonly { readonly asDouble?: number }[] };
+  readonly sum?: { readonly dataPoints: readonly DataPoint[] };
 }
 
 interface Run {
   readonly code: number | null;
   readonly stdout: string;
   readonly stderr: string;
-  readonly answers: readonly { readonly status: number; readonly body: unknown }[];
 }
 
 const folder = fileURLToPath(new URL('..', import.meta.url));
 const database = useTestDatabase();
+const productDatabase = useTestDatabase();
+const kafka = useKafka();
+const shop = uniqueApp('shop');
+let mailpit: Mailpit;
 let receiver: Server;
 let bodies: { path: string; body: Record<string, unknown> }[];
+
+beforeAll(async () => {
+  [mailpit] = await Promise.all([startMailpit(), createProducerTopics(kafka, [shop])]);
+}, 60_000);
+
+afterAll(async () => {
+  await mailpit?.stop();
+});
 
 beforeEach(async () => {
   bodies = [];
@@ -62,7 +86,19 @@ async function freePort(): Promise<number> {
   return port;
 }
 
-async function run(env: Record<string, string>, paths: readonly string[]): Promise<Run> {
+function settings(): Record<string, string> {
+  return {
+    OTEL_SERVICE_NAME: 'notifications-api',
+    DATABASE_URL: database.url,
+    KAFKA_BROKERS: kafka.brokers.join(','),
+    KAFKA_USERNAME: kafka.username,
+    KAFKA_PASSWORD: kafka.password,
+    PRODUCERS_FILE: producersFile([{ app: shop, senders: ['shop@zigordev.test'] }]),
+    ...mailpit.env,
+  };
+}
+
+async function run(env: Record<string, string>, during: (base: string) => Promise<void>) {
   const port = await freePort();
   const child = spawn(process.execPath, ['--import', '@zigordev/otel/register', 'src/main.ts'], {
     cwd: folder,
@@ -72,7 +108,6 @@ async function run(env: Record<string, string>, paths: readonly string[]): Promi
       OTEL_EXPORTER_OTLP_ENDPOINT: `http://127.0.0.1:${(receiver.address() as AddressInfo).port}`,
       OTEL_EXPORTER_OTLP_PROTOCOL: 'http/json',
       OTEL_METRIC_EXPORT_INTERVAL: '600000',
-      DATABASE_URL: database.url,
       ...env,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -92,15 +127,21 @@ async function run(env: Record<string, string>, paths: readonly string[]): Promi
     });
     void exited.then(() => resolve(false));
   });
-  const answers: { status: number; body: unknown }[] = [];
   if (await started) {
-    for (const path of paths) {
-      const response = await fetch(`http://127.0.0.1:${port}${path}`);
-      answers.push({ status: response.status, body: (await response.json()) as unknown });
+    try {
+      await during(`http://127.0.0.1:${port}`);
+    } finally {
+      child.kill('SIGTERM');
     }
-    child.kill('SIGTERM');
   }
-  return { code: await exited, stdout, stderr, answers };
+  return { code: await exited, stdout, stderr } satisfies Run;
+}
+
+async function healthy(base: string): Promise<unknown> {
+  return waitFor(
+    async () => (await fetch(`${base}/health`)).json() as Promise<{ status: string }>,
+    (body) => body.status === 'ok'
+  );
 }
 
 function lines(stdout: string): Record<string, unknown>[] {
@@ -126,34 +167,43 @@ function metrics(): ExportedMetric[] {
     .flatMap((resource) => resource.scopeMetrics.flatMap((scope) => scope.metrics));
 }
 
-describe('the API as a process', () => {
-  it('starts, answers with its version, and stops cleanly on a SIGTERM', async () => {
-    const outcome = await run(
-      { OTEL_SERVICE_NAME: 'notifications-api', OTEL_SERVICE_VERSION: '1f3a9c2' },
-      ['/api/v1/hello', '/health']
-    );
+function count(name: string, outcome: string): number {
+  const metric = metrics().find((candidate) => candidate.name === name);
+  const point = metric?.sum?.dataPoints.find((candidate) =>
+    candidate.attributes?.some(
+      (attribute) => attribute.key === 'outcome' && attribute.value.stringValue === outcome
+    )
+  );
+  return Number(point?.asInt ?? point?.asDouble ?? 0);
+}
+
+describe('the service as a process', () => {
+  it('starts, reports every part up with its version, and stops cleanly on a SIGTERM', async () => {
+    let health: unknown;
+    const outcome = await run({ ...settings(), OTEL_SERVICE_VERSION: '1f3a9c2' }, async (base) => {
+      health = await healthy(base);
+    });
 
     expect(outcome.stderr).toBe('');
     expect(outcome.code).toBe(0);
-    expect(outcome.answers).toEqual([
-      { status: 200, body: { message: 'Hello from notifications-api' } },
-      {
-        status: 200,
-        body: {
-          status: 'ok',
-          service: 'notifications-api',
-          version: '1f3a9c2',
-          components: { db: { status: 'up' }, flags: { status: 'up' } },
-        },
+    expect(health).toEqual({
+      status: 'ok',
+      service: 'notifications-api',
+      version: '1f3a9c2',
+      components: {
+        db: { status: 'up' },
+        flags: { status: 'up' },
+        provider: { status: 'up' },
+        kafka: { status: 'up' },
       },
-    ]);
-  }, 30_000);
+    });
+  }, 60_000);
 
-  it('writes its life and its greeting as JSON lines, with the trace of the request', async () => {
-    const outcome = await run(
-      { OTEL_SERVICE_NAME: 'notifications-api', OTEL_SERVICE_VERSION: '1f3a9c2' },
-      ['/api/v1/hello', '/health']
-    );
+  it('writes its life as JSON lines, and sends no trace while it waits for work', async () => {
+    const outcome = await run({ ...settings(), OTEL_SERVICE_VERSION: '1f3a9c2' }, async (base) => {
+      await healthy(base);
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+    });
 
     const written = lines(outcome.stdout);
     for (const line of written) {
@@ -163,32 +213,60 @@ describe('the API as a process', () => {
         level: 'info',
       });
     }
-    expect(written[0]?.message).toMatch(/^Server listening at http:/);
-    const events = written.filter((line) => line.event !== undefined);
-    expect(events.map((line) => line.event)).toEqual([
+    expect(written.filter((line) => line.event !== undefined).map((line) => line.event)).toEqual([
       'service.started',
-      'greeting.sent',
       'service.stopping',
     ]);
-    expect(events[1]?.traceId).toMatch(/^[0-9a-f]{32}$/);
-    expect(events[1]?.traceId).toBe(spans()[0]?.traceId);
-  }, 30_000);
+    expect(spans()).toEqual([]);
+  }, 60_000);
 
-  it('sends one span per request, named by its route, and its numbers', async () => {
-    await run({ OTEL_SERVICE_NAME: 'notifications-api' }, ['/api/v1/hello', '/health']);
+  it('carries the trace of a request from Kafka through the queue and SMTP to its outcome', async () => {
+    const product = startProduct({ app: shop, databaseUrl: productDatabase.url, kafka });
+    let requestId = '';
+    try {
+      const outcome = await run(settings(), async (base) => {
+        await healthy(base);
+        const event = await product.request({
+          to: { email: `ana.${randomUUID()}@example.com` },
+          subject: `Your order ${randomUUID()}`,
+          text: 'Hola',
+        });
+        requestId = event.id;
+        await product.outcomeOf(event.id);
+      });
+      expect(outcome.code).toBe(0);
 
-    expect(spans().map((span) => span.name)).toEqual(['GET /api/v1/hello']);
-    expect(spans()[0]?.attributes).toContainEqual({
-      key: 'http.route',
-      value: { stringValue: '/api/v1/hello' },
-    });
-    const greetings = metrics().find((metric) => metric.name === 'notifications.greetings');
-    expect(greetings?.sum?.dataPoints.map((point) => point.asDouble)).toEqual([1]);
-    expect(metrics().map((metric) => metric.name)).toContain('http.server.request.duration');
-  }, 30_000);
+      const consumed = spans().find((span) => span.name === `process ${requestTopicOf(shop)}`);
+      expect(consumed).toBeDefined();
+      const trace = spans()
+        .filter((span) => span.traceId === consumed?.traceId)
+        .map((span) => span.name);
+      expect(trace).toEqual(
+        expect.arrayContaining([
+          `process ${requestTopicOf(shop)}`,
+          'send email-deliveries',
+          'process email-deliveries',
+          'smtp.send',
+          `send notifications.outcomes.${shop}`,
+        ])
+      );
+      const events = lines(outcome.stdout).filter((line) => line.requestId === requestId);
+      expect(events.map((line) => [line.event, line.traceId])).toEqual([
+        ['email.accepted', consumed?.traceId],
+      ]);
+      expect(lines(outcome.stdout).find((line) => line.event === 'email.sent')?.traceId).toBe(
+        consumed?.traceId
+      );
+      expect(count('notifications.email.accepts', 'created')).toBe(1);
+      expect(count('notifications.email.sends', 'sent')).toBe(1);
+      expect(count('notifications.email.deliveries', 'sent')).toBe(1);
+    } finally {
+      await product.stop();
+    }
+  }, 60_000);
 
   it('refuses to start without the name of the service, and says so', async () => {
-    const outcome = await run({}, []);
+    const outcome = await run({}, async () => undefined);
 
     expect(outcome.code).toBe(1);
     expect(outcome.stdout).toBe('');

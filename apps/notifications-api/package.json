@@ -2,7 +2,7 @@
   "name": "notifications-api",
   "version": "0.0.0",
   "private": true,
-  "description": "The API of notifications: a Fastify service that answers the health route and says hello",
+  "description": "The notifications service: it reads email requests from Kafka, delivers them through SMTP with retries, and answers each request with its outcome",
   "license": "UNLICENSED",
   "type": "module",
   "engines": {
@@ -12,6 +12,7 @@
     "src",
     "drizzle",
     "flags.json",
+    "producers.json",
     "!src/**/*.test.ts"
   ],
   "scripts": {
@@ -28,19 +29,26 @@
     "@opentelemetry/api": "catalog:",
     "@zigordev/api": "catalog:",
     "@zigordev/config": "catalog:",
+    "@zigordev/events": "catalog:",
     "@zigordev/flags": "catalog:",
+    "@zigordev/notifications-events": "workspace:*",
     "@zigordev/otel": "catalog:",
     "drizzle-orm": "catalog:",
     "fastify": "catalog:",
+    "nodemailer": "catalog:",
     "pg": "catalog:shipped",
+    "pg-boss": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@platformatic/kafka": "catalog:",
     "@types/node": "catalog:",
+    "@types/nodemailer": "catalog:",
     "@types/pg": "catalog:",
     "@zigordev/dev": "catalog:",
     "@zigordev/test": "catalog:",
     "drizzle-kit": "catalog:",
+    "testcontainers": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

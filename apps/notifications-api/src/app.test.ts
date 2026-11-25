@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createLogger } from '@zigordev/otel';
@@ -6,30 +6,37 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type App, buildApp } from './app.ts';
 import { readConfig } from './config.ts';
 
+const settings = {
+  OTEL_SERVICE_NAME: 'notifications-api',
+  DATABASE_URL: 'postgresql://nobody@127.0.0.1:1/nothing',
+  KAFKA_BROKERS: '127.0.0.1:1',
+  KAFKA_USERNAME: 'notifications-api',
+  KAFKA_PASSWORD: 'nothing',
+  SMTP_HOST: '127.0.0.1',
+  SMTP_PORT: '1',
+};
+
 let app: App;
 let lines: string[];
 
+function quiet() {
+  return createLogger({ service: 'notifications-api', destination: { write: () => undefined } });
+}
+
 beforeEach(async () => {
   lines = [];
-  const config = readConfig({
-    OTEL_SERVICE_NAME: 'notifications-api',
-    DATABASE_URL: 'postgresql://nobody@127.0.0.1:1/nothing',
-  });
+  const config = readConfig(settings);
   const logger = createLogger({
     service: config.OTEL_SERVICE_NAME,
     destination: { write: (line: string) => lines.push(line) },
   });
-  app = await buildApp({ config, logger });
+  app = await buildApp({ config, logger, work: false });
 });
 
 afterEach(async () => {
   await app.close();
   vi.unstubAllEnvs();
 });
-
-function events(): unknown[] {
-  return lines.map((line) => (JSON.parse(line) as { event?: string }).event);
-}
 
 describe('GET /health', () => {
   it('answers 503 error, naming the database, while the database cannot be reached', async () => {
@@ -52,49 +59,49 @@ describe('GET /health', () => {
   });
 });
 
-describe('GET /api/v1/hello', () => {
-  it('answers 200 with a greeting, as JSON', async () => {
-    const response = await app.inject({ method: 'GET', url: '/api/v1/hello' });
+describe('the docs', () => {
+  it('describe an API with no business route, since requests come over Kafka', async () => {
+    const response = await app.inject({ method: 'GET', url: '/api/v1/openapi.json' });
 
     expect(response.statusCode).toBe(200);
-    expect(response.headers['content-type']).toContain('application/json');
-    expect(response.json()).toEqual({ message: 'Hello from notifications-api' });
-  });
-
-  it('writes the event greeting.sent, and no line per request', async () => {
-    await app.inject({ method: 'GET', url: '/api/v1/hello' });
-
-    expect(events()).toEqual(['greeting.sent']);
-  });
-  it('greets as a friend once the flag friendly-greeting is on', async () => {
-    const folder = mkdtempSync(join(tmpdir(), 'notifications-api-flags-'));
-    const file = join(folder, 'flags.json');
-    const flags = JSON.parse(readFileSync(new URL('../flags.json', import.meta.url), 'utf8'));
-    flags.flags['friendly-greeting'].defaultVariant = 'on';
-    writeFileSync(file, JSON.stringify(flags));
-    await app.close();
-    app = await buildApp({
-      config: readConfig({
-        OTEL_SERVICE_NAME: 'notifications-api',
-        DATABASE_URL: 'postgresql://nobody@127.0.0.1:1/nothing',
-        FLAGS_FILE: file,
-      }),
-      logger: createLogger({
-        service: 'notifications-api',
-        destination: { write: () => undefined },
-      }),
-    });
-
-    const response = await app.inject({ method: 'GET', url: '/api/v1/hello' });
-
-    expect(response.json()).toEqual({ message: 'Hi there, from notifications-api' });
+    expect(response.json()).toMatchObject({ info: { title: 'Notifications API' }, paths: {} });
   });
 });
 
 describe('a path that no route matches', () => {
   it('answers 404', async () => {
-    const response = await app.inject({ method: 'GET', url: '/api/v1/nothing' });
+    const response = await app.inject({ method: 'GET', url: '/api/v1/emails' });
 
     expect(response.statusCode).toBe(404);
+  });
+});
+
+describe('buildApp', () => {
+  it('refuses to build with a producers file it cannot use', async () => {
+    const folder = mkdtempSync(join(tmpdir(), 'notifications-producers-'));
+    const file = join(folder, 'producers.json');
+    writeFileSync(file, JSON.stringify({ producers: [{ app: 'Shop', senders: [] }] }));
+
+    await expect(
+      buildApp({
+        config: readConfig({ ...settings, PRODUCERS_FILE: file }),
+        logger: quiet(),
+        work: false,
+      })
+    ).rejects.toThrow(`The producers file ${file} is invalid`);
+  });
+
+  it('closes what it opened when a part fails to start', async () => {
+    await expect(
+      buildApp({
+        config: readConfig({ ...settings, FLAGS_FILE: '/nothing/flags.json' }),
+        logger: quiet(),
+        work: false,
+      })
+    ).rejects.toThrow('The flags file /nothing/flags.json cannot be read');
+  });
+
+  it('refuses to start its work while the database cannot be reached', async () => {
+    await expect(buildApp({ config: readConfig(settings), logger: quiet() })).rejects.toThrow();
   });
 });

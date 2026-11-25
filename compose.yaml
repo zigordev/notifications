@@ -18,7 +18,12 @@ services:
       OTEL_SERVICE_VERSION: ${VERSION:-local}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
       DATABASE_URL: postgresql://notifications_api:${NOTIFICATIONS_API_DATABASE_PASSWORD:-}@notifications-postgres:5432/notifications_api
-      API_KEYS: ${NOTIFICATIONS_API_KEYS:-}
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_USERNAME: notifications-api
+      KAFKA_PASSWORD: ${NOTIFICATIONS_API_KAFKA_PASSWORD:-}
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_SECURITY: none
     depends_on:
       notifications-api-migrate:
         condition: service_completed_successfully
