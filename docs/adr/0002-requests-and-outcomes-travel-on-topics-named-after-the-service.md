@@ -1,12 +1,14 @@
 # 0002. Requests and outcomes travel on topics named after the service
 
-- Status: proposed
+- Status: accepted
 - Date: 2026-11-25
 - Supersedes: none
 
 ## Context
 
 toolkit's [record 0042](https://github.com/zigordev/toolkit/blob/main/docs/adr/0042-notifications-takes-requests-and-gives-outcomes-over-kafka.md), accepted on 2026-11-25, has every app send its email as a request event on a request topic of its own, and read an outcome event, sent or failed, on an answer topic of its own. The service skips a request it already has, by its id, and the outcome names the request, never the address. [Record 0041](https://github.com/zigordev/toolkit/blob/main/docs/adr/0041-each-app-signs-in-to-kafka-with-its-own-password.md) gives each app its own Kafka user, and access rules that let it write only its request topic and read only its answer topic. `platform` makes the topics and the rules as code. Those records leave the names of the topics, the fields of the events and the list of the apps that may send to this repo.
+
+The main session of the platform's restart confirmed on 2026-11-25 that `platform`'s list of topics, users and rules takes these names as they are. The owner accepted this record the same day, in their words: "Accept 0002".
 
 Facts that shaped the choices:
 
