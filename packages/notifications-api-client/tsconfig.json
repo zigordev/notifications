@@ -1,6 +1,0 @@
-{
-  "extends": "@zigordev/dev/tsconfig/node.json",
-  "compilerOptions": {
-    "noEmit": true
-  }
-}

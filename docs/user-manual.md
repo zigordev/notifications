@@ -1,33 +1,120 @@
 # What a user can do with notifications
 
-The users of notifications are the other products: each one will hand it an email to send and learn what happened to it. That arrives with the service, over Kafka, in the next steps of phase 5. Today the API holds the template's example feature, and this page lists what a caller can do with it, flow by flow.
+The users of notifications are the other apps of the platform. An app hands it an email to deliver, and learns what happened to it. Both travel over Kafka, through `@zigordev/events`, as toolkit's [record 0042](https://github.com/zigordev/toolkit/blob/main/docs/adr/0042-notifications-takes-requests-and-gives-outcomes-over-kafka.md) says. No app calls the service over HTTP.
 
-## A caller of the API
+## Before an app sends its first email
 
-A caller signs in with an API key in `Authorization: Bearer <key>`. Each key has scopes: `notes:read` to read, and `notes:write` to change. The keys' digests live in the setting `API_KEYS`, and in production in the secret `NOTIFICATIONS_API_KEYS`, which the owner sets.
+An app needs four things, once. The first three are code in `platform`, and the fourth in this repo.
 
-| Flow                     | Request                         | Answer                                                                                                       |
-| ------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Ask whether it is well   | `GET /health`                   | JSON with `status`, the service's name, the `version` that runs, and the state of its database and its flags |
-| Read the greeting        | `GET /api/v1/hello`             | 200 with a message, with no key. The flag `friendly-greeting` picks its words                                |
-| List notes               | `GET /api/v1/notes`             | 200 with a page of notes, filtered by `status` and `q`, sorted and paged                                     |
-| Write a note             | `POST /api/v1/notes`            | 201 with the note and its `Location`                                                                         |
-| Read one note            | `GET /api/v1/notes/{noteId}`    | 200 with the note, or 404                                                                                    |
-| Change a note            | `PATCH /api/v1/notes/{noteId}`  | 200 with the changed note, or 404                                                                            |
-| Delete a note            | `DELETE /api/v1/notes/{noteId}` | 204, or 404                                                                                                  |
-| Read the API's own pages | `GET /api/v1/docs`              | The OpenAPI pages, with every request and every error                                                        |
+| What                                                                                                             | Where                                                       |
+| ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Its own Kafka user, named after the app, such as `playground-api`, with its password in Parameter Store          | `platform`, and the owner for the password                  |
+| Its two topics: `notifications.requests.<app>` and `notifications.outcomes.<app>`, with their dead-letter topics | `platform`                                                  |
+| The access rules: it may write its request topic and read its outcome topic, and nothing else                    | `platform`                                                  |
+| Its entry in `apps/notifications-api/producers.json`: its name, and the addresses it may send from               | This repo, in a pull request that goes live with its deploy |
 
-Every error is a problem in the platform's format: `type`, `title`, `status`, `detail`, `instance`, and a stable `code` with its `params`. The [README](../README.md) shows how to make a key on the laptop.
+```json
+{
+  "producers": [
+    { "app": "playground-api", "senders": ["no-reply@zigordev.com", "help@zigordev.com"] }
+  ]
+}
+```
 
-## What comes with the service
+The first sender is the one the service uses when a request names none.
 
-| Flow                | How a product will do it                                                            |
-| ------------------- | ----------------------------------------------------------------------------------- |
-| Send an email       | Render it with `@zigordev/email`, and send a request event on its own request topic |
-| Learn what happened | Read the outcome event on its own answer topic: sent, or failed after the retries   |
+## Send an email
 
-toolkit's [record 0042](https://github.com/zigordev/toolkit/blob/main/docs/adr/0042-notifications-takes-requests-and-gives-outcomes-over-kafka.md) describes both. This page lists them in full when they exist.
+Add the package of events beside `@zigordev/events`, and render the email with `@zigordev/email`. Write the request into the app's outbox, in the same transaction as the change it belongs to:
+
+```ts
+import { verifyEmail } from '@zigordev/email';
+import { addToOutbox } from '@zigordev/events';
+import { emailRequested, requestTopicOf } from '@zigordev/notifications-events';
+
+await app.db.transaction(async (tx) => {
+  const [user] = await tx.insert(users).values(signUp).returning();
+  const email = verifyEmail({ lang: 'es', product: 'Playground', link: confirmationUrl });
+  const request = await addToOutbox(tx, {
+    topic: requestTopicOf('playground-api'),
+    event: emailRequested,
+    data: {
+      to: { email: user.email, name: user.name },
+      ...email,
+      tags: { template: 'verify-email' },
+    },
+  });
+  await tx.update(users).set({ verificationRequestId: request.id }).where(eq(users.id, user.id));
+});
+```
+
+- The user and the request are saved together, or not at all. The relay of `@zigordev/events` sends the request once Kafka answers, so a request is never lost, even while the broker or the service is down.
+- `addToOutbox` returns the event. Its `id` is the request's id: keep it to match the outcome later.
+- The request's id is also its safe-retry key. The service accepts a request once, however often Kafka brings it, and sends its email once.
+
+| Field     | Holds                                                                            | Rules                                           |
+| --------- | -------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `to`      | The addressee: `email` and, if wanted, `name`                                    | Required                                        |
+| `from`    | The sender: one of the app's senders in `producers.json`                         | Optional. Without it, the app's first sender    |
+| `replyTo` | Where answers go                                                                 | Optional                                        |
+| `subject` | The subject                                                                      | 1 to 998 characters, with no line break         |
+| `html`    | The HTML body                                                                    | `html`, `text` or both                          |
+| `text`    | The plain-text body                                                              | `html`, `text` or both                          |
+| `tags`    | Up to 10 short labels kept with the email, such as the template and the language | Lower-case keys, values of up to 256 characters |
+
+The whole request is at most 800,000 bytes as JSON, so that it fits in one Kafka message. A request that breaks a rule fails in the app's own `addToOutbox`, before anything is saved.
+
+## Learn what happened
+
+The service answers every request on the app's outcome topic, once the email is sent or has failed for good. Read it with a consumer of the app's own:
+
+```ts
+import { defineConsumer } from '@zigordev/events';
+import { outcomeEvents, outcomeTopicOf } from '@zigordev/notifications-events';
+
+defineConsumer({
+  group: 'playground-api.email-outcomes',
+  topics: [outcomeTopicOf('playground-api')],
+  events: outcomeEvents,
+  handle: async (event, { tx }) => {
+    const sent = event.type === 'email.sent';
+    await tx
+      .update(users)
+      .set({ verificationEmail: sent ? 'sent' : 'failed' })
+      .where(eq(users.verificationRequestId, event.data.requestId));
+  },
+});
+```
+
+| Event          | Says                           | Fields                                                                          |
+| -------------- | ------------------------------ | ------------------------------------------------------------------------------- |
+| `email.sent`   | The mail server took the email | `requestId`, `sentAt`, `attempts`                                               |
+| `email.failed` | The email will never be sent   | `requestId`, `failedAt`, `attempts`, `reason`, and `smtpCode` when there is one |
+
+| `reason`              | Means                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------- |
+| `rejected`            | The mail server refused the email for good, with a 5xx reply, such as an unknown mailbox |
+| `attempts_exhausted`  | Five tries were deferred with a 4xx reply                                                |
+| `retry_limit_reached` | The queue's own limit of tries ran out, for a failure the rules above do not cover       |
+| `sender_forbidden`    | The request named a sender the app may not use. Nothing was sent                         |
+
+- An outcome names the request, never the address, the subject or the body.
+- Sent means that the mail server took the email. With Amazon SES that is not proof that it arrived: bounces come later, through an SES event feed that nothing reads yet.
+- While the mail server cannot be reached, the service holds every email, for as long as it takes. No outcome comes until it is sent or refused.
+- A version 1 reader also reads a version 1 outcome that gained a field later, because the outcome schemas let unknown fields through. A change that removes or renames a field gets a new version.
+
+## Ask whether it is well
+
+`GET /health` at the service's address answers with its version and the state of each part it depends on: `db`, `flags`, `provider` (the mail server) and `kafka`. It answers 200 `ok`, 200 `degraded` while Kafka or the mail server is down, because the service still holds every request until they are back, and 503 `error` while its database is down. The deploy and the platform's checks read it.
 
 ## Critical paths
 
-The health route is the critical path today: the deploy and the platform's checks read it. It reports the database and the flags. It is tested on its own, as part of the API's routes on a real PostgreSQL, and in the API run as a real process.
+There are no pages, so there are no browser tests. Each path above has tests against a real PostgreSQL, a real Kafka and a real Mailpit:
+
+| Path                                                                 | Tests                                                              |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| A request is delivered as rendered, and answered with `email.sent`   | `apps/notifications-api/src/features/emails/requests.db.test.ts`   |
+| A request that arrives twice is sent once                            | The same file                                                      |
+| A forbidden sender, and a message that is no request                 | The same file                                                      |
+| Retries, failures for good, and a mail server that is down           | `apps/notifications-api/src/features/delivery/delivery.db.test.ts` |
+| One trace from the request through the queue and SMTP to the outcome | `apps/notifications-api/src/main.e2e.db.test.ts`                   |

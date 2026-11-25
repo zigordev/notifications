@@ -3,5 +3,10 @@ services:
     depends_on: !reset []
     environment:
       OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=production
+      SMTP_HOST: email-smtp.eu-west-1.amazonaws.com
+      SMTP_PORT: "587"
+      SMTP_SECURITY: starttls
+      SMTP_USER: ${NOTIFICATIONS_API_SMTP_USER:-}
+      SMTP_PASSWORD: ${NOTIFICATIONS_API_SMTP_PASSWORD:-}
     labels:
       traefik.http.routers.notifications-api.rule: Host(`notifications.zigordev.com`)

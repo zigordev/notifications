@@ -1,8 +1,10 @@
 import { EventEmitter } from 'node:events';
 import { type AddressInfo, createServer as createTcpServer } from 'node:net';
 import { createLogger, type LoggerOptions } from '@zigordev/otel';
+import { useKafka } from '@zigordev/test/kafka';
 import { useTestDatabase } from '@zigordev/test/postgres';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { type Mailpit, startMailpit } from '../test/mailpit.ts';
 import { type Server, type Signal, start, stopOnSignals } from './start.ts';
 
 const otel = vi.hoisted(() => ({
@@ -16,8 +18,28 @@ vi.mock('@zigordev/otel', async (importOriginal) => {
 });
 
 const database = useTestDatabase();
+const kafka = useKafka();
+let mailpit: Mailpit;
 let lines: string[];
 let running: Server | undefined;
+
+beforeAll(async () => {
+  mailpit = await startMailpit();
+}, 60_000);
+
+afterAll(async () => {
+  await mailpit?.stop();
+});
+
+function dependencies(): Record<string, string> {
+  return {
+    DATABASE_URL: database.url,
+    KAFKA_BROKERS: kafka.brokers.join(','),
+    KAFKA_USERNAME: kafka.username,
+    KAFKA_PASSWORD: kafka.password,
+    ...mailpit.env,
+  };
+}
 
 async function freePort(): Promise<number> {
   const probe = createTcpServer();
@@ -36,7 +58,7 @@ async function startOne(env: Record<string, string> = {}): Promise<Server> {
   running = await start({
     env: {
       OTEL_SERVICE_NAME: 'notifications-api',
-      DATABASE_URL: database.url,
+      ...dependencies(),
       PORT: String(await freePort()),
       HOST: '127.0.0.1',
       ...env,
@@ -61,10 +83,10 @@ describe('start', () => {
     const server = await startOne();
     const base = `http://127.0.0.1:${server.config.PORT}`;
 
-    const hello = await fetch(`${base}/api/v1/hello`);
+    const docs = await fetch(`${base}/api/v1/openapi.json`);
     const health = await fetch(`${base}/health`);
 
-    expect(await hello.json()).toEqual({ message: 'Hello from notifications-api' });
+    expect(await docs.json()).toMatchObject({ info: { title: 'Notifications API' } });
     expect(health.status).toBe(200);
   });
 
@@ -93,7 +115,7 @@ describe('start', () => {
     running = await start({
       env: {
         OTEL_SERVICE_NAME: 'notifications-api',
-        DATABASE_URL: database.url,
+        ...dependencies(),
         OTEL_SERVICE_VERSION: '1f3a9c2',
         LOG_LEVEL: 'debug',
         PORT: String(await freePort()),
