@@ -15,6 +15,8 @@ The events of the notifications service: the request an app sends to have an ema
 | `maxRequestBytes`                            | 800,000: the largest request, as JSON                                                                 |
 | `EmailRequest`, `EmailOutcomeEvent`, …       | The types of the data and of the events                                                               |
 
+The package also ships `events.json`: the contract of the three events as JSON Schema, with the names of their topics, for a reader that is not written in TypeScript.
+
 An event is defined with `defineEvent` of [`@zigordev/events`](https://github.com/zigordev/toolkit/blob/main/packages/events/README.md): a name, a version and a Zod schema, written once and used by the sender and the reader.
 
 ## Why we have it
@@ -35,6 +37,8 @@ flowchart LR
 - **The outcomes are lenient.** A reader on version 1 lets an unknown field through, so the service can add a field to an outcome without breaking any app. A field that changes or goes gets a new version.
 - **The request's id is its key.** `addToOutbox` gives each request a random id. The service accepts a request once, however often Kafka brings it, and its outcome names that id.
 - **The topics carry the sender.** Only the app may write its request topic, as `platform`'s access rules say, so the service knows the producer from the topic.
+- **The contract is committed.** `events.json` holds each event's type, version and JSON Schema. A test fails while it differs from the code, so a change to an event shows in review as a change of the contract. Another test keeps reading requests and outcomes that version 1 allowed, so tightening a rule of version 1 fails too.
+- **It is published by the pipeline.** On a merge to `main`, the Release job of toolkit tags the next version and publishes the package to npm, through npm's trust in GitHub's proof of the workflow, with no stored token. The service's app is never published. toolkit's [packages page](https://github.com/zigordev/toolkit/blob/main/docs/handbook/packages.md) explains the release.
 
 ## How to use it
 
@@ -85,7 +89,8 @@ The repo's [user manual](../../docs/user-manual.md) lists every field, every rea
 
 ## How to check that it works
 
-- `pnpm exec vitest run --project notifications-events` runs the package's own tests: every rule of the request, the outcomes, the topic names, and a request read back through the envelope of `@zigordev/events`.
+- `pnpm exec vitest run --project notifications-events` runs the package's own tests: every rule of the request, the outcomes, the topic names, a request read back through the envelope of `@zigordev/events`, and the committed contract.
+- After a change to an event, `pnpm --dir packages/notifications-events run contract` writes `events.json` again. Read the difference before committing it: a change that a reader of the same version would not understand needs a new version of the event instead.
 - The service's tests send real requests built with this package through a real Kafka, and read the outcomes with it, so the package and the service cannot drift apart.
 
 | What you see                                                     | What it means, and what to do                                                                                  |
@@ -94,3 +99,4 @@ The repo's [user manual](../../docs/user-manual.md) lists every field, every rea
 | `An app is named in lower case words joined by dashes`           | `requestTopicOf` was given a name that is not an app's Kafka user                                              |
 | No outcome comes, and the service logs `events.message_rejected` | The service could not read the request: the app sends an event or a version that the service does not know yet |
 | An outcome `email.failed` with `sender_forbidden`                | The request's `from` is not among the app's senders in the service's `producers.json`                          |
+| The contract test fails                                          | An event changed. Write `events.json` again, and check that the change keeps version 1 readable                |
