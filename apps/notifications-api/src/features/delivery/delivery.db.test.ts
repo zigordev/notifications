@@ -60,7 +60,7 @@ async function health(): Promise<{ statusCode: number; body: Record<string, unkn
 }
 
 describe('delivery through SMTP', () => {
-  it('reports every part it depends on, the provider and Kafka among them', async () => {
+  it('reports every part it depends on, the provider, Kafka and its topics among them', async () => {
     const answer = await waitFor(health, (current) => current.body.status === 'ok');
 
     expect(answer).toEqual({
@@ -74,6 +74,7 @@ describe('delivery through SMTP', () => {
           flags: { status: 'up' },
           provider: { status: 'up' },
           kafka: { status: 'up' },
+          topics: { status: 'up' },
         },
       },
     });

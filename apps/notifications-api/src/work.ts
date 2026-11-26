@@ -150,7 +150,11 @@ export async function startWork(options: WorkOptions): Promise<Work> {
   });
 
   return {
-    health: [{ name: 'provider', required: false, check: () => monitor.status }, events.health],
+    health: [
+      { name: 'provider', required: false, check: () => monitor.status },
+      events.health,
+      events.topics,
+    ],
     stop: async () => {
       await events.stop();
       await worker.stop();

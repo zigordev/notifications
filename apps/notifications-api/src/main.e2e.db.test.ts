@@ -195,6 +195,7 @@ describe('the service as a process', () => {
         flags: { status: 'up' },
         provider: { status: 'up' },
         kafka: { status: 'up' },
+        topics: { status: 'up' },
       },
     });
   }, 60_000);
