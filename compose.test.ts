@@ -396,8 +396,8 @@ describe('the secrets of production', () => {
     const example = parseEnv(readFileSync(`${folder}.env.production.example`, 'utf8'));
 
     expect(Object.keys(example).sort()).toEqual([
+      'KAFKA_PASSWORD',
       'NOTIFICATIONS_API_DATABASE_PASSWORD',
-      'NOTIFICATIONS_API_KAFKA_PASSWORD',
       'NOTIFICATIONS_API_SMTP_PASSWORD',
       'NOTIFICATIONS_API_SMTP_USER',
       'POSTGRES_PASSWORD',

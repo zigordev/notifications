@@ -20,7 +20,7 @@ services:
       DATABASE_URL: postgresql://notifications_api:${NOTIFICATIONS_API_DATABASE_PASSWORD:-}@notifications-postgres:5432/notifications_api
       KAFKA_BROKERS: kafka:9092
       KAFKA_USERNAME: notifications-api
-      KAFKA_PASSWORD: ${NOTIFICATIONS_API_KAFKA_PASSWORD:-}
+      KAFKA_PASSWORD: ${KAFKA_PASSWORD:-}
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
       SMTP_SECURITY: none
