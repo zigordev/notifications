@@ -157,14 +157,28 @@ Nothing personal reaches a log line, a metric or a span: no address, no subject,
 | `email.retention_failed` | error | The daily job failed. pg-boss tries it again                              |
 | `queue.failed`           | error | pg-boss reported an error                                                 |
 
-| Metric                                  | Labels            | Counts                                                             |
-| --------------------------------------- | ----------------- | ------------------------------------------------------------------ |
-| `notifications.email.accepts`           | producer, outcome | Requests read: `created`, `replayed` or `forbidden`                |
-| `notifications.email.sends`             | producer, outcome | Attempts: `sent`, `deferred`, `rejected` or `provider_unavailable` |
-| `notifications.email.deliveries`        | producer, outcome | Emails that ended: `sent` or `failed`                              |
-| `notifications.email.delivery.duration` | producer          | Seconds from the request to the mail server taking it              |
+| Metric                                  | Labels            | Reports                                                                                       |
+| --------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------- |
+| `notifications.email.accepts`           | producer, outcome | Requests read: `created`, `replayed` or `forbidden`                                           |
+| `notifications.email.sends`             | producer, outcome | Attempts: `sent`, `deferred`, `rejected` or `provider_unavailable`                            |
+| `notifications.email.deliveries`        | producer, outcome | Emails that ended: `sent` or `failed`                                                         |
+| `notifications.email.delivery.duration` | producer          | Seconds from the request to the mail server taking it                                         |
+| `notifications.provider.up`             | none              | `1` while the last check of the mail server passed, `0` while it failed. It checks every 30 s |
 
-`@zigordev/events` adds the messaging metrics of the requests and the outcomes, and pg-boss those of its queues. One trace follows a request from the product's send, through the service's consumer, the queue and the SMTP send, to the outcome's send. An idle service starts no trace.
+`@zigordev/events` adds the messaging metrics of the requests and the outcomes, and pg-boss those of its queues, among them `pgboss.queue.jobs`: the jobs of each queue by state. One trace follows a request from the product's send, through the service's consumer, the queue and the SMTP send, to the outcome's send. An idle service starts no trace.
+
+### The alerts that watch it
+
+Four alert rules in `platform` read these numbers and email the owner. Each links its runbook, the page that says how to check and fix what it found.
+
+| Alert                                                                                                                                       | Reads                                      | Fires when                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| [An email failed for good](https://github.com/zigordev/platform/blob/main/docs/runbooks/email-failed-for-good.md)                           | `notifications.email.deliveries`           | An email ended as `failed`, for any reason, in the last 10 minutes                               |
+| [Jobs are waiting](https://github.com/zigordev/platform/blob/main/docs/runbooks/jobs-are-waiting.md)                                        | `pgboss.queue.jobs`                        | A queue has had jobs ready to start for 15 minutes. On `email-deliveries`, those jobs are emails |
+| [The mail server cannot be reached](https://github.com/zigordev/platform/blob/main/docs/runbooks/mail-server-cannot-be-reached.md)          | `notifications.provider.up`                | The check of the mail server has failed for 10 minutes, with or without emails waiting           |
+| [An app cannot be reached from outside](https://github.com/zigordev/platform/blob/main/docs/runbooks/app-cannot-be-reached-from-outside.md) | Grafana Cloud's outside check of `/health` | The latest check from every place has failed for 5 minutes. A `503` from `/health` fails it too  |
+
+The names are the contract with those rules. Renaming one of these metrics, an `outcome` value or the queue `email-deliveries` silences its alert, so such a change comes with a pull request in `platform`.
 
 ## How it runs in containers
 
@@ -178,6 +192,4 @@ On a merge to `main`, Publish builds `ghcr.io/zigordev/notifications-api` for ar
 
 ## What is left for later
 
-- **In `platform`:** the broker in the local bundle and on the host, with the service's Kafka user, each app's topics and their access rules. Then step 5.4: the SES identity for the domain, the mail password and the deploy role.
-- **Step 5.5, production:** the Deploy job, and a real email sent from a merge with no manual step.
-- **Step 5.6, the runbooks and alerts,** in `platform`: delivery failures, and mail that is stuck.
+- **Step 5.5, production:** a real email sent from a merge with no manual step. It needs Amazon SES out of its sandbox, and an app in production that sends.
