@@ -38,6 +38,6 @@ The notifications service of the zigordev platform: one service that delivers th
 - A new app that sends email is a line in `producers.json`, after `platform` has its Kafka user, its topics and their access rules.
 - Never log, count or trace an address, a subject or a body. Log the email's id, the request's id and the producer.
 - No Deploy job runs yet. It comes with step 5.5, once the platform has the deploy target `notifications`. From then on a merge to `main` deploys, and a change that should not be live yet ships behind a flag with a removal date.
-- A new secret is a new line `NAME=` in `.env.production.example`, and its value is the owner's to store in Parameter Store before the merge that needs it.
+- A new secret is a new line `NAME=` in `.env.production.example`, and its value is the owner's to store in Parameter Store before the merge that needs it. The two SMTP values are the exception: `platform/infra/email` makes `/notifications/NOTIFICATIONS_API_SMTP_USER` and `/notifications/NOTIFICATIONS_API_SMTP_PASSWORD`, as platform's record 0030 says.
 - The PostgreSQL of this product listens on `127.0.0.1:5435` on the laptop, beside the template's on 5433 and the playground's on 5434.
 - A shared file is changed in toolkit, never here. `pnpm check` fails while a copy differs.
