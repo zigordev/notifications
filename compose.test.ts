@@ -75,9 +75,9 @@ describe('the scripts', () => {
   };
   const product = 'docker compose --file compose.yaml --file compose.local.yaml';
 
-  it('start the shared services first, from the package notifications depends on', () => {
+  it('start the shared services first, from the package notifications depends on, but without their own copy of notifications', () => {
     expect(manifest.scripts['local:up']).toBe(
-      `zigordev-stack up && ${product} up --build --detach --wait`
+      `zigordev-stack up --without notifications && ${product} up --build --detach --wait`
     );
     expect(manifest.devDependencies['@zigordev/stack']).toBe('catalog:');
   });

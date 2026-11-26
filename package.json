@@ -19,7 +19,7 @@
     "test": "vitest run --coverage",
     "check:quick": "pnpm run lint && pnpm run build && pnpm run typecheck && vitest run --project '!*:db'",
     "check": "start=$(date +%s); pnpm run lint && pnpm run build && pnpm run typecheck && pnpm run test; code=$?; echo \"check took $(( $(date +%s) - start )) s\"; exit $code",
-    "local:up": "zigordev-stack up && docker compose --file compose.yaml --file compose.local.yaml up --build --detach --wait",
+    "local:up": "zigordev-stack up --without notifications && docker compose --file compose.yaml --file compose.local.yaml up --build --detach --wait",
     "local:down": "docker compose --file compose.yaml --file compose.local.yaml down",
     "local:reset": "docker compose --file compose.yaml --file compose.local.yaml down --volumes && pnpm run local:up",
     "dev": "sh -c 'test -n \"$1\" || { echo \"Name the app: pnpm dev api\" >&2; exit 2; }; exec pnpm --fail-if-no-match --filter \"./apps/*-$1\" run dev' --",

@@ -23,7 +23,7 @@ The notifications service of the zigordev platform: one service that delivers th
 - `pnpm install` installs the dependencies and the git hooks.
 - `pnpm check` runs what CI runs: lint, build, type check, and tests with coverage. Docker has to run, because the tests start a real PostgreSQL, Kafka and Mailpit. With OrbStack, put `DOCKER_HOST="unix://$HOME/.orbstack/run/docker.sock"` before the command.
 - `pnpm check:quick` runs the same without coverage and without the tests that need a container. The push hook runs it.
-- `pnpm local:up` starts the shared services and the product in containers, at `http://notifications.localhost`. `pnpm local:down` stops the product only.
+- `pnpm local:up` starts the shared services and the product in containers, at `http://notifications.localhost`. It starts the shared services without their own copy of notifications, which every other repo's `local:up` runs, so the copy built here alone reads the requests. `pnpm local:down` stops the product only.
 - `pnpm dev api` runs the service on this Mac with hot reload, beside the containers.
 - `pnpm check:contract` builds the image and holds it, and the compose files, to the platform contract.
 - `pnpm --dir apps/notifications-api run db:generate --name <change>` writes the SQL of a change to the schema. `run openapi` rewrites its `openapi.json`.

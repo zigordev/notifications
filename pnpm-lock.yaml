@@ -229,8 +229,8 @@ catalogs:
       specifier: 1.34.0
       version: 1.34.0
     '@zigordev/stack':
-      specifier: 1.7.1
-      version: 1.7.1
+      specifier: 1.8.0
+      version: 1.8.0
     '@zigordev/test':
       specifier: 1.34.0
       version: 1.34.0
@@ -301,7 +301,7 @@ importers:
         version: 1.34.0(@biomejs/biome@2.6.9)(@commitlint/cli@21.2.4(conventional-commits-parser@7.1.4)(typescript@7.0.2))(lefthook@2.2.1)(markdownlint-cli2@0.24.2(supports-color@7.2.0))
       '@zigordev/stack':
         specifier: 'catalog:'
-        version: 1.7.1
+        version: 1.8.0
       lefthook:
         specifier: 'catalog:'
         version: 2.2.1
@@ -1855,8 +1855,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.10.0
 
-  '@zigordev/stack@1.7.1':
-    resolution: {integrity: sha512-Ga2k5JKtyOtnbjt09YsnxS9AVayl6YmMUJ1EtAnw628vmMAlwMb6aY6gi0m0ZQAqegIvo319QRKuWS12AS2f6w==}
+  '@zigordev/stack@1.8.0':
+    resolution: {integrity: sha512-zaMihTSOIwaviRQRQ8Bq9zXai5kSH+YCg8PuMRvRDOUvJAoPJtSlDQ5x1Yi+EkwmVpKiLVS/JWStVIpJBA4CgQ==}
     engines: {node: '>=26'}
     hasBin: true
 
@@ -5602,7 +5602,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@zigordev/stack@1.7.1': {}
+  '@zigordev/stack@1.8.0': {}
 
   '@zigordev/test@1.34.0(bare-buffer@3.7.3)(supports-color@7.2.0)(vitest@5.1.1)':
     dependencies:

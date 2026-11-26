@@ -18,7 +18,7 @@ catalog:
   "@zigordev/events": 1.34.0
   "@zigordev/flags": 1.34.0
   "@zigordev/otel": 1.34.0
-  "@zigordev/stack": 1.7.1
+  "@zigordev/stack": 1.8.0
   "@zigordev/test": 1.34.0
   "drizzle-kit": 0.31.11
   "drizzle-orm": 0.45.4

@@ -40,7 +40,7 @@ This page takes a laptop with nothing installed to notifications running in cont
    pnpm local:up
    ```
 
-   It ends when every container is healthy. Open <http://notifications.localhost/health> for the service's health, <http://mail.localhost> for Mailpit, and <http://grafana.localhost> for its logs, traces and metrics.
+   It stops the shared services' own copy of notifications first, so the copy built from this folder alone reads the requests. It ends when every container is healthy. Open <http://notifications.localhost/health> for the service's health, <http://mail.localhost> for Mailpit, and <http://grafana.localhost> for its logs, traces and metrics.
 
 5. Stop the product when you are done. The shared services keep running for the other products:
 
