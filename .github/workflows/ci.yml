@@ -15,7 +15,7 @@ concurrency:
 jobs:
   pipeline:
     name: Pipeline
-    uses: zigordev/toolkit/.github/workflows/check.yml@8f43d0f4a26c614d9243b628c3ce1aa1d67dbe3c # v1.35.0
+    uses: zigordev/toolkit/.github/workflows/check.yml@78353025edce087db221402dabb7472084bf2d1f # v1.36.0
     with:
       product-folder: .
     permissions:
@@ -41,7 +41,7 @@ jobs:
     name: Publish
     needs: [check]
     if: github.event_name == 'push'
-    uses: zigordev/toolkit/.github/workflows/publish.yml@8f43d0f4a26c614d9243b628c3ce1aa1d67dbe3c # v1.35.0
+    uses: zigordev/toolkit/.github/workflows/publish.yml@78353025edce087db221402dabb7472084bf2d1f # v1.36.0
     permissions:
       contents: read
       packages: write
@@ -52,7 +52,7 @@ jobs:
     name: Release
     needs: [check]
     if: github.event_name == 'push'
-    uses: zigordev/toolkit/.github/workflows/release.yml@8f43d0f4a26c614d9243b628c3ce1aa1d67dbe3c # v1.35.0
+    uses: zigordev/toolkit/.github/workflows/release.yml@78353025edce087db221402dabb7472084bf2d1f # v1.36.0
     permissions:
       contents: write
       id-token: write

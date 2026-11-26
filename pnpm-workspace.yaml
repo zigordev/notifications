@@ -12,14 +12,14 @@ catalog:
   "@types/nodemailer": 8.0.2
   "@types/pg": 8.23.1
   "@vitest/coverage-v8": 5.1.1
-  "@zigordev/api": 1.35.0
-  "@zigordev/config": 1.35.0
-  "@zigordev/dev": 1.35.0
-  "@zigordev/events": 1.35.0
-  "@zigordev/flags": 1.35.0
-  "@zigordev/otel": 1.35.0
+  "@zigordev/api": 1.36.0
+  "@zigordev/config": 1.36.0
+  "@zigordev/dev": 1.36.0
+  "@zigordev/events": 1.36.0
+  "@zigordev/flags": 1.36.0
+  "@zigordev/otel": 1.36.0
   "@zigordev/stack": 1.8.1
-  "@zigordev/test": 1.35.0
+  "@zigordev/test": 1.36.0
   "drizzle-kit": 0.31.11
   "drizzle-orm": 0.45.4
   "fastify": 5.12.8

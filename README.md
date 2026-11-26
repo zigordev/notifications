@@ -91,12 +91,12 @@ pnpm local:up
 
 Every other repo's `local:up` runs a copy of notifications from its published image, inside the shared services. This one stops that copy first, so the copy built from this folder alone reads the requests.
 
-| Address                                      | Answers                                                                                          |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `http://notifications.localhost/health`      | The service's health: its version, and whether its database, flags, mail server and Kafka are up |
-| `http://notifications.localhost/api/v1/docs` | The OpenAPI pages, which hold no business route                                                  |
-| `http://mail.localhost`                      | Mailpit, with every email the service sent on this laptop                                        |
-| `http://grafana.localhost`                   | Grafana. The dashboard named App, in the folder zigordev, lists `notifications-api`              |
+| Address                                      | Answers                                                                                                      |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `http://notifications.localhost/health`      | The service's health: its version, and whether its database, flags, mail server, Kafka and its topics are up |
+| `http://notifications.localhost/api/v1/docs` | The OpenAPI pages, which hold no business route                                                              |
+| `http://mail.localhost`                      | Mailpit, with every email the service sent on this laptop                                                    |
+| `http://grafana.localhost`                   | Grafana. The dashboard named App, in the folder zigordev, lists `notifications-api`                          |
 
 Until the broker is in `@zigordev/stack`, the service runs with Kafka down: `/health` answers `degraded`, and no request arrives. The tests use a broker of their own. `pnpm local:down` stops the product and leaves the shared services running. [The local guide](docs/local-first-start.md) has every step, and `pnpm dev api` for hot reload.
 
