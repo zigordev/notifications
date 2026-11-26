@@ -89,6 +89,8 @@ To run the product in containers, behind the shared services of `@zigordev/stack
 pnpm local:up
 ```
 
+Every other repo's `local:up` runs a copy of notifications from its published image, inside the shared services. This one stops that copy first, so the copy built from this folder alone reads the requests.
+
 | Address                                      | Answers                                                                                          |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `http://notifications.localhost/health`      | The service's health: its version, and whether its database, flags, mail server and Kafka are up |
