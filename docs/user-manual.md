@@ -107,7 +107,9 @@ defineConsumer({
 
 ## Ask whether it is well
 
-`GET /health` at the service's address answers with its version and the state of each part it depends on: `db`, `flags`, `provider` (the mail server) and `kafka`. It answers 200 `ok`, 200 `degraded` while Kafka or the mail server is down, because the service still holds every request until they are back, and 503 `error` while its database is down. The deploy and the platform's checks read it.
+`GET /health` at the service's address answers with its version and the state of each part it depends on: `db`, `flags`, `provider` (the mail server), `kafka` and `topics`. It answers 200 `ok`, 200 `degraded` while Kafka or the mail server is down, because the service still holds every request until they are back, and 503 `error` while its database is down or Kafka says a topic it reads is missing. The deploy and the platform's checks read it.
+
+The owner hears of trouble without asking: an alert in `platform` fires when an email of your app fails for good, when emails wait in the queue for 15 minutes, when the mail server cannot be reached for 10 minutes, and when the service cannot be reached from outside. The README's [The alerts that watch it](../README.md#the-alerts-that-watch-it) lists them.
 
 ## Critical paths
 

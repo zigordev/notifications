@@ -32,6 +32,7 @@ interface DataPoint {
 interface ExportedMetric {
   readonly name: string;
   readonly sum?: { readonly dataPoints: readonly DataPoint[] };
+  readonly gauge?: { readonly dataPoints: readonly DataPoint[] };
 }
 
 interface Run {
@@ -177,6 +178,13 @@ function count(name: string, outcome: string): number {
   return Number(point?.asInt ?? point?.asDouble ?? 0);
 }
 
+function gauge(name: string): number | undefined {
+  const point = metrics()
+    .find((candidate) => candidate.name === name)
+    ?.gauge?.dataPoints.at(-1);
+  return point === undefined ? undefined : Number(point.asInt ?? point.asDouble);
+}
+
 describe('the service as a process', () => {
   it('starts, reports every part up with its version, and stops cleanly on a SIGTERM', async () => {
     let health: unknown;
@@ -264,6 +272,40 @@ describe('the service as a process', () => {
     } finally {
       await product.stop();
     }
+  }, 60_000);
+
+  it('reports its check of the mail server as 1 while the server answers', async () => {
+    let reported: number | undefined;
+    const outcome = await run(
+      { ...settings(), OTEL_METRIC_EXPORT_INTERVAL: '500' },
+      async (base) => {
+        await healthy(base);
+        reported = await waitFor(
+          async () => gauge('notifications.provider.up'),
+          (value) => value !== undefined
+        );
+      }
+    );
+
+    expect(outcome.code).toBe(0);
+    expect(reported).toBe(1);
+  }, 60_000);
+
+  it('reports its check of the mail server as 0 while the server cannot be reached', async () => {
+    const closed = await freePort();
+    let reported: number | undefined;
+    const outcome = await run(
+      { ...settings(), SMTP_PORT: String(closed), OTEL_METRIC_EXPORT_INTERVAL: '500' },
+      async () => {
+        reported = await waitFor(
+          async () => gauge('notifications.provider.up'),
+          (value) => value !== undefined
+        );
+      }
+    );
+
+    expect(outcome.code).toBe(0);
+    expect(reported).toBe(0);
   }, 60_000);
 
   it('refuses to start without the name of the service, and says so', async () => {

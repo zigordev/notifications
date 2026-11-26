@@ -10,7 +10,7 @@ import { createSmtpProvider } from './features/delivery/smtp-provider.ts';
 import { DeliveryWorker } from './features/delivery/worker.ts';
 import { requestsConsumer } from './features/emails/requests.ts';
 import { retentionQueue, startRetentionWorker } from './features/retention/retention.ts';
-import { createMetrics } from './metrics.ts';
+import { createMetrics, observeProvider } from './metrics.ts';
 import type { Producers } from './producers.ts';
 
 export const stopTimeoutMs = 20_000;
@@ -90,10 +90,8 @@ export async function startWork(options: WorkOptions): Promise<Work> {
     openTelemetry: { propagateContext: true },
   });
   watchQueue(boss, logger);
-  const metrics = createMetrics(
-    options.meter ?? metricsApi.getMeter(config.OTEL_SERVICE_NAME),
-    producers.apps
-  );
+  const meter = options.meter ?? metricsApi.getMeter(config.OTEL_SERVICE_NAME);
+  const metrics = createMetrics(meter, producers.apps);
   const retryPolicy = {
     retryDelaySeconds: config.DELIVERY_RETRY_DELAY_SECONDS,
     retryDelayMaxSeconds: config.DELIVERY_RETRY_DELAY_MAX_SECONDS,
@@ -148,6 +146,7 @@ export async function startWork(options: WorkOptions): Promise<Work> {
     consumers: consumer === undefined ? [] : [consumer],
     ...(tuning.relayInterval === undefined ? {} : { relay: { interval: tuning.relayInterval } }),
   });
+  const stopObservingProvider = observeProvider(meter, monitor);
 
   return {
     health: [
@@ -156,6 +155,7 @@ export async function startWork(options: WorkOptions): Promise<Work> {
       events.topics,
     ],
     stop: async () => {
+      stopObservingProvider();
       await events.stop();
       await worker.stop();
       await boss.stop({ graceful: true, timeout: stopTimeoutMs });

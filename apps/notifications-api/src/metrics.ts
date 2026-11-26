@@ -1,5 +1,5 @@
-import type { Meter } from '@opentelemetry/api';
-import { createCounterAtZero } from '@zigordev/otel';
+import type { Meter, ObservableResult } from '@opentelemetry/api';
+import { type ComponentStatus, createCounterAtZero } from '@zigordev/otel';
 import { type AttemptOutcome, attemptOutcomes } from './db/schema.ts';
 
 export const acceptOutcomes = ['created', 'replayed', 'forbidden'] as const;
@@ -51,5 +51,25 @@ export function createMetrics(meter: Meter, producers: readonly string[]): Metri
     attempted: (producer, outcome) => attempts.add(1, { producer, outcome }),
     delivered: (producer, outcome) => deliveries.add(1, { producer, outcome }),
     deliveryDuration: (producer, seconds) => duration.record(seconds, { producer }),
+  };
+}
+
+export interface CheckedProvider {
+  readonly status: ComponentStatus;
+}
+
+export function observeProvider(meter: Meter, monitor: CheckedProvider): () => void {
+  const gauge = meter.createObservableGauge('notifications.provider.up', {
+    description:
+      'Whether the last check of the mail server passed: 1 when it did, 0 when it failed',
+  });
+  const observe = (result: ObservableResult): void => {
+    if (monitor.status !== 'unknown') {
+      result.observe(monitor.status === 'up' ? 1 : 0);
+    }
+  };
+  gauge.addCallback(observe);
+  return () => {
+    gauge.removeCallback(observe);
   };
 }
