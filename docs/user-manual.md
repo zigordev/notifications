@@ -23,7 +23,12 @@ An app needs four things, once. The first three are code in `platform`, and the 
 
 The first sender is the one the service uses when a request names none.
 
-Today the file names one app: `template-api`, the API of toolkit's product template, which sends sign-in's emails from `no-reply@zigordev.com`. The template runs only on the laptop, so `platform` gives it its Kafka user and its rules there alone. Its four topics exist on every broker, the production one too, because the service reads the request topic of every app in this file, and a single missing topic stops it reading any of them.
+Today the file names two apps, which both send sign-in's emails from `no-reply@zigordev.com`:
+
+- `template-api`, the API of toolkit's product template. The template runs only on the laptop, so `platform` gives it its Kafka user and its rules there alone.
+- `playground-api`, the API of the playground, which runs in production too. `platform` gives it its Kafka user and its rules on every broker.
+
+The four topics of each exist on every broker, the production one too, because the service reads the request topic of every app in this file, and a single missing topic stops it reading any of them. So an app joins this file only after `platform` has made its topics in production.
 
 ## Send an email
 

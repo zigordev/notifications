@@ -1,3 +1,6 @@
 {
-  "producers": [{ "app": "template-api", "senders": ["no-reply@zigordev.com"] }]
+  "producers": [
+    { "app": "template-api", "senders": ["no-reply@zigordev.com"] },
+    { "app": "playground-api", "senders": ["no-reply@zigordev.com"] }
+  ]
 }
