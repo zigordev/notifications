@@ -174,7 +174,7 @@ Nothing personal reaches a log line, a metric or a span: no address, no subject,
 
 ## How it reaches production
 
-On a merge to `main`, Publish builds `ghcr.io/zigordev/notifications-api` for arm64 and attests it, and Release tags the next version and publishes `@zigordev/notifications-events` to npm when a merge's title gives one: a `feat` gives a minor version, a `fix` a patch. There is no Deploy job yet: it comes with step 5.5, once `platform` has the broker on the host, the SES identity, the deploy target and the secrets. [How it reaches production](docs/cloud-first-deploy.md) lists what each of them needs.
+On a merge to `main`, Publish builds `ghcr.io/zigordev/notifications-api` for arm64 and attests it. Deploy then sends the commit to the host, and waits until `https://notifications.zigordev.com/health` names it, or rolls back. Release tags the next version and publishes `@zigordev/notifications-events` to npm when a merge's title gives one: a `feat` gives a minor version, a `fix` a patch. [How it reaches production](docs/cloud-first-deploy.md) says what each step needs.
 
 ## What is left for later
 

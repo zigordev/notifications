@@ -48,6 +48,21 @@ jobs:
       id-token: write
       attestations: write
 
+  deploy:
+    name: Deploy
+    needs: [publish]
+    if: github.event_name == 'push'
+    uses: zigordev/toolkit/.github/workflows/deploy.yml@78353025edce087db221402dabb7472084bf2d1f # v1.36.0
+    with:
+      target: notifications
+      health-url: https://notifications.zigordev.com/health
+    secrets:
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: read
+
   release:
     name: Release
     needs: [check]

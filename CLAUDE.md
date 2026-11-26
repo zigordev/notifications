@@ -14,7 +14,7 @@ The notifications service of the zigordev platform: one service that delivers th
 | `compose.yaml`                        | The product as it runs everywhere. `compose.local.yaml` and `compose.production.yaml` hold only the differences                       |
 | `compose.test.ts`                     | The test that holds the compose files and the Dockerfile to the container rules                                                       |
 | `.env.production.example`             | The names of production's secrets. The values live in Parameter Store under `/notifications/<NAME>`                                   |
-| `.github/workflows/ci.yml`            | The caller of toolkit's pipeline, publish and release workflows, pinned to one commit of toolkit                                      |
+| `.github/workflows/ci.yml`            | The caller of toolkit's pipeline, publish, deploy and release workflows, pinned to one commit of toolkit                              |
 | `.claude/`                            | The shared rules, skills, hooks and permissions. `zigordev sync` writes them                                                          |
 | `docs/`                               | The standard docs and the decision records                                                                                            |
 
@@ -37,7 +37,7 @@ The notifications service of the zigordev platform: one service that delivers th
 - A change to an event that a reader of its version would not understand is a new version of the event, in `packages/notifications-events`, read beside the old one.
 - A new app that sends email is a line in `producers.json`, after `platform` has its Kafka user, its topics and their access rules.
 - Never log, count or trace an address, a subject or a body. Log the email's id, the request's id and the producer.
-- No Deploy job runs yet. It comes with step 5.5, once the platform has the deploy target `notifications`. From then on a merge to `main` deploys, and a change that should not be live yet ships behind a flag with a removal date.
+- Every merge to `main` deploys, to the deploy target `notifications` of `platform`, and rolls back when `https://notifications.zigordev.com/health` never names the new commit. A change that should not be live yet ships behind a flag with a removal date.
 - A new secret is a new line `NAME=` in `.env.production.example`, and its value is the owner's to store in Parameter Store before the merge that needs it. The two SMTP values are the exception: `platform/infra/email` makes `/notifications/NOTIFICATIONS_API_SMTP_USER` and `/notifications/NOTIFICATIONS_API_SMTP_PASSWORD`, as platform's record 0030 says.
 - The PostgreSQL of this product listens on `127.0.0.1:5435` on the laptop, beside the template's on 5433 and the playground's on 5434.
 - A shared file is changed in toolkit, never here. `pnpm check` fails while a copy differs.
