@@ -211,29 +211,29 @@ catalogs:
       specifier: 5.1.1
       version: 5.1.1
     '@zigordev/api':
-      specifier: 1.36.0
-      version: 1.36.0
+      specifier: 1.46.1
+      version: 1.46.1
     '@zigordev/config':
-      specifier: 1.36.0
-      version: 1.36.0
+      specifier: 1.46.1
+      version: 1.46.1
     '@zigordev/dev':
-      specifier: 1.36.0
-      version: 1.36.0
+      specifier: 1.46.1
+      version: 1.46.1
     '@zigordev/events':
-      specifier: 1.36.0
-      version: 1.36.0
+      specifier: 1.46.1
+      version: 1.46.1
     '@zigordev/flags':
-      specifier: 1.36.0
-      version: 1.36.0
+      specifier: 1.46.1
+      version: 1.46.1
     '@zigordev/otel':
-      specifier: 1.36.0
-      version: 1.36.0
+      specifier: 1.46.1
+      version: 1.46.1
     '@zigordev/stack':
-      specifier: 1.8.1
-      version: 1.8.1
+      specifier: 1.11.0
+      version: 1.11.0
     '@zigordev/test':
-      specifier: 1.36.0
-      version: 1.36.0
+      specifier: 1.46.1
+      version: 1.46.1
     drizzle-kit:
       specifier: 0.31.11
       version: 0.31.11
@@ -298,10 +298,10 @@ importers:
         version: 5.1.1(vitest@5.1.1)
       '@zigordev/dev':
         specifier: 'catalog:'
-        version: 1.36.0(@biomejs/biome@2.6.9)(@commitlint/cli@21.2.4(conventional-commits-parser@7.1.4)(typescript@7.0.2))(lefthook@2.2.3)(markdownlint-cli2@0.24.2(supports-color@7.2.0))
+        version: 1.46.1(@biomejs/biome@2.6.9)(@commitlint/cli@21.2.4(conventional-commits-parser@7.1.4)(typescript@7.0.2))(lefthook@2.2.3)(markdownlint-cli2@0.24.2(supports-color@7.2.0))
       '@zigordev/stack':
         specifier: 'catalog:'
-        version: 1.8.1
+        version: 1.11.0
       lefthook:
         specifier: 'catalog:'
         version: 2.2.3
@@ -331,22 +331,22 @@ importers:
         version: 1.10.0
       '@zigordev/api':
         specifier: 'catalog:'
-        version: 1.36.0(@zigordev/otel@1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1))(fastify@5.12.8)(openapi-types@12.1.3)(pg@8.23.1)(supports-color@7.2.0)(zod@4.6.7)
+        version: 1.46.1(@zigordev/otel@1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1))(fastify@5.12.8)(openapi-types@12.1.3)(pg@8.23.1)(supports-color@7.2.0)(zod@4.6.7)
       '@zigordev/config':
         specifier: 'catalog:'
-        version: 1.36.0(zod@4.6.7)
+        version: 1.46.1(zod@4.6.7)
       '@zigordev/events':
         specifier: 'catalog:'
-        version: 1.36.0(@opentelemetry/api@1.10.0)(@zigordev/otel@1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1))(pg@8.23.1)(supports-color@7.2.0)(zod@4.6.7)
+        version: 1.46.1(@opentelemetry/api@1.10.0)(@zigordev/otel@1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1))(pg@8.23.1)(supports-color@7.2.0)(zod@4.6.7)
       '@zigordev/flags':
         specifier: 'catalog:'
-        version: 1.36.0(@grpc/grpc-js@1.14.7)(@openfeature/core@1.12.0)(@openfeature/server-sdk@1.23.0(@openfeature/core@1.12.0))(@zigordev/otel@1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(zod@4.6.7)
+        version: 1.46.1(@grpc/grpc-js@1.14.7)(@openfeature/core@1.12.0)(@openfeature/server-sdk@1.23.0(@openfeature/core@1.12.0))(@zigordev/otel@1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(zod@4.6.7)
       '@zigordev/notifications-events':
         specifier: workspace:*
         version: link:../../packages/notifications-events
       '@zigordev/otel':
         specifier: 'catalog:'
-        version: 1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
+        version: 1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
@@ -377,10 +377,10 @@ importers:
         version: 8.23.1
       '@zigordev/dev':
         specifier: 'catalog:'
-        version: 1.36.0(@biomejs/biome@2.6.9)(@commitlint/cli@21.2.4(conventional-commits-parser@7.1.4)(typescript@7.0.2))(lefthook@2.2.3)(markdownlint-cli2@0.24.2(supports-color@7.2.0))
+        version: 1.46.1(@biomejs/biome@2.6.9)(@commitlint/cli@21.2.4(conventional-commits-parser@7.1.4)(typescript@7.0.2))(lefthook@2.2.3)(markdownlint-cli2@0.24.2(supports-color@7.2.0))
       '@zigordev/test':
         specifier: 'catalog:'
-        version: 1.36.0(bare-buffer@3.7.3)(supports-color@7.2.0)(vitest@5.1.1)
+        version: 1.46.1(bare-buffer@3.7.3)(supports-color@7.2.0)(vitest@5.1.1)
       drizzle-kit:
         specifier: 'catalog:'
         version: 0.31.11
@@ -401,10 +401,10 @@ importers:
         version: 26.6.10
       '@zigordev/dev':
         specifier: 'catalog:'
-        version: 1.36.0(@biomejs/biome@2.6.9)(@commitlint/cli@21.2.4(conventional-commits-parser@7.1.4)(typescript@7.0.2))(lefthook@2.2.3)(markdownlint-cli2@0.24.2(supports-color@7.2.0))
+        version: 1.46.1(@biomejs/biome@2.6.9)(@commitlint/cli@21.2.4(conventional-commits-parser@7.1.4)(typescript@7.0.2))(lefthook@2.2.3)(markdownlint-cli2@0.24.2(supports-color@7.2.0))
       '@zigordev/events':
         specifier: 'catalog:'
-        version: 1.36.0(@opentelemetry/api@1.10.0)(@zigordev/otel@1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1))(pg@8.23.1)(supports-color@7.2.0)(zod@4.6.7)
+        version: 1.46.1(@opentelemetry/api@1.10.0)(@zigordev/otel@1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1))(pg@8.23.1)(supports-color@7.2.0)(zod@4.6.7)
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
@@ -1804,24 +1804,24 @@ packages:
   '@vitest/spy@5.1.1':
     resolution: {integrity: sha512-6K8C6alQG1/Yc8/ZI22iJS7JEsxPdVzqtqDq+/xM4Z0mGVykemMVjLhqMy/q6/IHYG3kKD8hKSwRen/ZdyI9vQ==}
 
-  '@zigordev/api@1.36.0':
-    resolution: {integrity: sha512-Tc3rpC/ocOavOpAUs25uGItfFMxn644NDC1JW7KWtusjA4IeFSMScHWFe38ZiCace7O8rlTUYzOrpb+SiV114w==}
+  '@zigordev/api@1.46.1':
+    resolution: {integrity: sha512-4jHWbNpI9XYQ+0ge3UboTUK/tYcSMY2kZzw4FzvxZ0WX04bz/8VHHcdocnlC30k1shgvci92J2RFc9Rwgo+Gsw==}
     engines: {node: '>=26'}
     peerDependencies:
-      '@zigordev/otel': ^1.36.0
+      '@zigordev/otel': ^1.46.1
       drizzle-orm: ^0.45.4
       fastify: ^5.12.0
       pg: ^8.23.0
       zod: ^4.6.0
 
-  '@zigordev/config@1.36.0':
-    resolution: {integrity: sha512-7w1GaO0+1mG+cc59HVjuY141x409T0oE3wxLlyxxv7J3SuoB/4FR0mp/uQRZ5GvJO1myQGLoOLtamCIlRLohOA==}
+  '@zigordev/config@1.46.1':
+    resolution: {integrity: sha512-PbOin4TDZnDvsj56kRip7EV4utr5sfAoLPbPcj8fDYybP/i6yZdaNu6FwC9zKF0o5LVL7tcqtSooLcqjmbn9MQ==}
     engines: {node: '>=26'}
     peerDependencies:
       zod: ^4.6.0
 
-  '@zigordev/dev@1.36.0':
-    resolution: {integrity: sha512-rqqu3NG0bZIcqfe3tzoiRfbMavgkZ4a8VGAmYTZvpeV3NY8V1CgxHOby2MeB13hQGy8/Y3gtRC+1B4mST7lhgg==}
+  '@zigordev/dev@1.46.1':
+    resolution: {integrity: sha512-JZDXDTfcQBc7To0RRBibBJwqL+GuxEXlW/Zb7smwy/L7DS/1fbq1w1/oBVkzS3qOVhd+Xd6wX73zF1Gsfs2ifA==}
     engines: {node: '>=26'}
     hasBin: true
     peerDependencies:
@@ -1830,38 +1830,38 @@ packages:
       lefthook: ^2.2.0
       markdownlint-cli2: ^0.24.0
 
-  '@zigordev/events@1.36.0':
-    resolution: {integrity: sha512-y9HL5PTsEuU46uiQiGRPuCPToB9rvkUZHDLFsS96rEFEtP6xDiYknMDF4/00CHc7xX48UrEYX5A0FSfMMXvocg==}
+  '@zigordev/events@1.46.1':
+    resolution: {integrity: sha512-oN/d/cgAvCzNdHRvjNQKFr9vHrljfvf+xscXIBVzfGH+CfPYGwid6uS4nSjB38yyQUixsW6nqFAcKpGDRKFB+g==}
     engines: {node: '>=26'}
     peerDependencies:
       '@opentelemetry/api': ^1.10.0
-      '@zigordev/otel': ^1.36.0
+      '@zigordev/otel': ^1.46.1
       drizzle-orm: ^0.45.4
       pg: ^8.23.0
       zod: ^4.6.0
 
-  '@zigordev/flags@1.36.0':
-    resolution: {integrity: sha512-8quPlQ6ADA+yzBXJ6lu983dp09UnQ8pkbnLcdKB89PihWz4lWTtzwxVVi7VRq6IBCtfaIxVLggQXtNke/9NvRw==}
+  '@zigordev/flags@1.46.1':
+    resolution: {integrity: sha512-+kd9nO4e+UQJVRVa5M5ereeTZG68e0dyBD0TAHf3JNgneUuomtcOGYNd8RsaPDXbh8B47jG8nfBrypNfACp7OQ==}
     engines: {node: '>=26'}
     peerDependencies:
       '@grpc/grpc-js': ^1.14.0
       '@openfeature/server-sdk': ^1.23.0
-      '@zigordev/otel': ^1.36.0
+      '@zigordev/otel': ^1.46.1
       zod: ^4.6.0
 
-  '@zigordev/otel@1.36.0':
-    resolution: {integrity: sha512-VA2sVnI3UuRNKTWIU6UGjAJh96+6CXmBaaHzOAw4d3K+xhdm+grMfpF6WTMdhs5YPtWRW+o8aBnGMbRzqKrtJA==}
+  '@zigordev/otel@1.46.1':
+    resolution: {integrity: sha512-tkt+V7kl77g2X4Qz+jNfTyKac081bjSKxQc4n4TVs57++lHus/3tX3HH391lFNPwrwoUlo8rXk5/UQofDdKVRg==}
     engines: {node: '>=26'}
     peerDependencies:
       '@opentelemetry/api': ^1.10.0
 
-  '@zigordev/stack@1.8.1':
-    resolution: {integrity: sha512-xi4S+wRUEVi8bnp+Jja+OtZTWl6px6ZZTmSJ7jJMyGDPTmB8jGruBa49FFHDM6Ud0rWsUx9UHWpVq+7GkBfUEA==}
+  '@zigordev/stack@1.11.0':
+    resolution: {integrity: sha512-BIMycMWYfP0DEGIkbkkgS6VxoRWxJ89ffif5yBFQAl4QHt8JLeS9JImGUYMyQgEl92QwdjxvGJU0g8DWgTJVYA==}
     engines: {node: '>=26'}
     hasBin: true
 
-  '@zigordev/test@1.36.0':
-    resolution: {integrity: sha512-R1j5APE3iDluTt8KhOyF5o2VLD2V4FfxLxfADj1xYOD9DY/UIgnBrAmTNuj1OI77yYh9lVeSN9cPfdBUPra4eg==}
+  '@zigordev/test@1.46.1':
+    resolution: {integrity: sha512-0hM367UUkmTe5+nlJAT0QpJywLrWtJ9e/dk48QoMa7J8lJ99iFIPnr4vlX/I+Gr3wSOQQCkBjLsesMqjkqpKWw==}
     engines: {node: '>=26'}
     peerDependencies:
       vitest: ^5.1.0
@@ -5541,12 +5541,12 @@ snapshots:
 
   '@vitest/spy@5.1.1': {}
 
-  '@zigordev/api@1.36.0(@zigordev/otel@1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1))(fastify@5.12.8)(openapi-types@12.1.3)(pg@8.23.1)(supports-color@7.2.0)(zod@4.6.7)':
+  '@zigordev/api@1.46.1(@zigordev/otel@1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1))(fastify@5.12.8)(openapi-types@12.1.3)(pg@8.23.1)(supports-color@7.2.0)(zod@4.6.7)':
     dependencies:
       '@fastify/rate-limit': 11.3.0
       '@fastify/swagger': 9.9.5(supports-color@7.2.0)
       '@fastify/swagger-ui': 6.1.5
-      '@zigordev/otel': 1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
+      '@zigordev/otel': 1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
       drizzle-orm: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
       fastify: 5.12.8
       fastify-type-provider-zod: 7.0.0(@fastify/swagger@9.9.5(supports-color@7.2.0))(fastify@5.12.8)(openapi-types@12.1.3)(zod@4.6.7)
@@ -5556,11 +5556,11 @@ snapshots:
       - openapi-types
       - supports-color
 
-  '@zigordev/config@1.36.0(zod@4.6.7)':
+  '@zigordev/config@1.46.1(zod@4.6.7)':
     dependencies:
       zod: 4.6.7
 
-  '@zigordev/dev@1.36.0(@biomejs/biome@2.6.9)(@commitlint/cli@21.2.4(conventional-commits-parser@7.1.4)(typescript@7.0.2))(lefthook@2.2.3)(markdownlint-cli2@0.24.2(supports-color@7.2.0))':
+  '@zigordev/dev@1.46.1(@biomejs/biome@2.6.9)(@commitlint/cli@21.2.4(conventional-commits-parser@7.1.4)(typescript@7.0.2))(lefthook@2.2.3)(markdownlint-cli2@0.24.2(supports-color@7.2.0))':
     dependencies:
       '@biomejs/biome': 2.6.9
       '@commitlint/cli': 21.2.4(conventional-commits-parser@7.1.4)(typescript@7.0.2)
@@ -5568,28 +5568,28 @@ snapshots:
       lefthook: 2.2.3
       markdownlint-cli2: 0.24.2(supports-color@7.2.0)
 
-  '@zigordev/events@1.36.0(@opentelemetry/api@1.10.0)(@zigordev/otel@1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1))(pg@8.23.1)(supports-color@7.2.0)(zod@4.6.7)':
+  '@zigordev/events@1.46.1(@opentelemetry/api@1.10.0)(@zigordev/otel@1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1))(pg@8.23.1)(supports-color@7.2.0)(zod@4.6.7)':
     dependencies:
       '@opentelemetry/api': 1.10.0
       '@platformatic/kafka': 2.19.0(supports-color@7.2.0)
-      '@zigordev/otel': 1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
+      '@zigordev/otel': 1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
       drizzle-orm: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
       pg: 8.23.1
       zod: 4.6.7
     transitivePeerDependencies:
       - supports-color
 
-  '@zigordev/flags@1.36.0(@grpc/grpc-js@1.14.7)(@openfeature/core@1.12.0)(@openfeature/server-sdk@1.23.0(@openfeature/core@1.12.0))(@zigordev/otel@1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(zod@4.6.7)':
+  '@zigordev/flags@1.46.1(@grpc/grpc-js@1.14.7)(@openfeature/core@1.12.0)(@openfeature/server-sdk@1.23.0(@openfeature/core@1.12.0))(@zigordev/otel@1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0))(zod@4.6.7)':
     dependencies:
       '@grpc/grpc-js': 1.14.7
       '@openfeature/flagd-provider': 0.18.0(@grpc/grpc-js@1.14.7)(@openfeature/core@1.12.0)(@openfeature/server-sdk@1.23.0(@openfeature/core@1.12.0))
       '@openfeature/server-sdk': 1.23.0(@openfeature/core@1.12.0)
-      '@zigordev/otel': 1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
+      '@zigordev/otel': 1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0)
       zod: 4.6.7
     transitivePeerDependencies:
       - '@openfeature/core'
 
-  '@zigordev/otel@1.36.0(@opentelemetry/api@1.10.0)(supports-color@7.2.0)':
+  '@zigordev/otel@1.46.1(@opentelemetry/api@1.10.0)(supports-color@7.2.0)':
     dependencies:
       '@opentelemetry/api': 1.10.0
       '@opentelemetry/core': 3.1.1(@opentelemetry/api@1.10.0)
@@ -5607,9 +5607,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@zigordev/stack@1.8.1': {}
+  '@zigordev/stack@1.11.0': {}
 
-  '@zigordev/test@1.36.0(bare-buffer@3.7.3)(supports-color@7.2.0)(vitest@5.1.1)':
+  '@zigordev/test@1.46.1(bare-buffer@3.7.3)(supports-color@7.2.0)(vitest@5.1.1)':
     dependencies:
       '@testcontainers/postgresql': 12.2.2(bare-buffer@3.7.3)(supports-color@7.2.0)
       pg: 8.23.1
