@@ -15,7 +15,7 @@ concurrency:
 jobs:
   pipeline:
     name: Pipeline
-    uses: zigordev/toolkit/.github/workflows/check.yml@1e8e7eb7607281d7384db25e683d2ae4392fb473 # v1.46.1
+    uses: zigordev/toolkit/.github/workflows/check.yml@4c43ab92a2a9ba2054a86194f3d0b8803b3b14c1 # v1.47.0
     with:
       product-folder: .
     permissions:
@@ -41,7 +41,7 @@ jobs:
     name: Publish
     needs: [check]
     if: github.event_name == 'push'
-    uses: zigordev/toolkit/.github/workflows/publish.yml@1e8e7eb7607281d7384db25e683d2ae4392fb473 # v1.46.1
+    uses: zigordev/toolkit/.github/workflows/publish.yml@4c43ab92a2a9ba2054a86194f3d0b8803b3b14c1 # v1.47.0
     permissions:
       contents: read
       packages: write
@@ -52,7 +52,7 @@ jobs:
     name: Deploy
     needs: [publish]
     if: github.event_name == 'push'
-    uses: zigordev/toolkit/.github/workflows/deploy.yml@1e8e7eb7607281d7384db25e683d2ae4392fb473 # v1.46.1
+    uses: zigordev/toolkit/.github/workflows/deploy.yml@4c43ab92a2a9ba2054a86194f3d0b8803b3b14c1 # v1.47.0
     with:
       target: notifications
       health-url: https://notifications.zigordev.com/health
@@ -67,7 +67,7 @@ jobs:
     name: Release
     needs: [check]
     if: github.event_name == 'push'
-    uses: zigordev/toolkit/.github/workflows/release.yml@1e8e7eb7607281d7384db25e683d2ae4392fb473 # v1.46.1
+    uses: zigordev/toolkit/.github/workflows/release.yml@4c43ab92a2a9ba2054a86194f3d0b8803b3b14c1 # v1.47.0
     permissions:
       contents: write
       id-token: write
